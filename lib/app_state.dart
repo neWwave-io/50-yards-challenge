@@ -25,7 +25,15 @@ class FFAppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<String> _optionMowed = [];
+  /// Fallback so the "who did you mow for" dropdown is never empty when the
+  /// backend has no settings row yet. Overwritten once settings load.
+  List<String> _optionMowed = [
+    'Elderly',
+    'Disabled',
+    'Single Parent',
+    'Veteran',
+    'Deployed Military',
+  ];
   List<String> get optionMowed => _optionMowed;
   set optionMowed(List<String> value) {
     _optionMowed = value;
@@ -54,7 +62,19 @@ class FFAppState extends ChangeNotifier {
     optionMowed.insert(index, value);
   }
 
-  List<String> _listStates = [];
+  /// Fallback state list, used until settings load.
+  List<String> _listStates = [
+    'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado',
+    'Connecticut', 'Delaware', 'District of Columbia', 'Florida', 'Georgia',
+    'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky',
+    'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan',
+    'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada',
+    'New Hampshire', 'New Jersey', 'New Mexico', 'New York',
+    'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon',
+    'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota',
+    'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington',
+    'West Virginia', 'Wisconsin', 'Wyoming',
+  ];
   List<String> get listStates => _listStates;
   set listStates(List<String> value) {
     _listStates = value;

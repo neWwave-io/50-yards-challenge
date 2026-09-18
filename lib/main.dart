@@ -10,6 +10,7 @@ import 'auth/firebase_auth/auth_util.dart';
 
 import 'backend/push_notifications/push_notifications_util.dart';
 import 'backend/firebase/firebase_config.dart';
+import '/core/supabase/supabase_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/nav/nav.dart';
@@ -68,6 +69,12 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     _appStateNotifier = AppStateNotifier.instance;
+    // Seed the notifier immediately. `AppStateNotifier.loading` is
+    // `user == null || showSplashImage`, so if the auth stream is slow or
+    // never emits, the splash image would stay up forever and no UI would
+    // ever render. Publishing the current session (possibly signed out)
+    // right away guarantees the app gets past the splash.
+    _appStateNotifier.update(SupabaseAuthUser(supabase.auth.currentUser));
     _router = createRouter(_appStateNotifier);
     userStream = the50YardChallengeFirebaseUserStream()
       ..listen((user) {
@@ -75,7 +82,7 @@ class _MyAppState extends State<MyApp> {
       });
     jwtTokenStream.listen((_) {});
     Future.delayed(
-      Duration(milliseconds: 1000),
+      Duration(milliseconds: 600),
       () => _appStateNotifier.stopShowingSplashImage(),
     );
   }
