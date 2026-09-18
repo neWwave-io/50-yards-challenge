@@ -28,12 +28,10 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 flutter_ios_podfile_setup
 
 target 'Runner' do
-  pod 'GoogleUtilities'
   use_frameworks! :linkage => :static
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-  pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '11.13.0'
 end
 
 post_install do |installer|
@@ -46,8 +44,7 @@ post_install do |installer|
   end
 end
 
-target 'ImageNotification' do
-  use_frameworks! :linkage => :static
-  pod 'Firebase/Messaging'
-  pod 'GoogleUtilities'
-end
+# 'ImageNotification' was a Firebase Cloud Messaging notification-service
+# extension. Dead now that Firebase is gone. The Xcode target and
+# ios/ImageNotification/ still need deleting in Xcode (editing project.pbxproj
+# by hand risks corrupting the project).

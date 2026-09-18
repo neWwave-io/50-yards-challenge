@@ -80,3 +80,6 @@ app.*.map.json
 
 # Env files
 firebase/functions/.env
+
+# local tooling
+.freebuff/

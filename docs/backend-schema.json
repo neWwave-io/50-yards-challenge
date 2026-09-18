@@ -1,0 +1,1446 @@
+{
+  "_meta": {
+    "generated": "2026-09-18",
+    "what_this_is": "The CURRENT Firebase backend, field by field, and where every field goes in Supabase.",
+    "source": "parsed from lib/backend/schema/*.dart \u2014 the FlutterFlow-generated Firestore models",
+    "firebase_project": "the-50-yard-challenge",
+    "target_schema_doc": "docs/SUPABASE_MIGRATION.md",
+    "coverage_guarantee": "Every source field is mapped, exploded into a new table, or dropped with a reason. The generator fails if any field is unaccounted for.",
+    "caveat": "Parsed from the Dart models, so it shows what the APP knows about. Fields added directly in the Firebase console that FlutterFlow never modeled will not appear here \u2014 verify against a real export."
+  },
+  "how_to_read_this": {
+    "firestore_type": "the type as stored in Firestore today",
+    "what_it_is": "plain-English meaning of the field right now",
+    "points_to": "for DocumentReference fields: which collection it references",
+    "migrates_to": "the Postgres table.column it becomes, or \"\u2014 DROPPED \u2014\"",
+    "transform": "copy | rename | cast | FLATTEN map | EXPLODE array | RESOLVE reference | MERGE | DROP"
+  },
+  "auth": {
+    "today": "Firebase Auth",
+    "methods_enabled": [
+      "email/password",
+      "google",
+      "apple",
+      "anonymous"
+    ],
+    "methods_scaffolded_but_unused": [
+      "github",
+      "jwt",
+      "anonymous"
+    ],
+    "user_doc_link": "users/{uid} \u2014 the Firestore doc id IS the Firebase Auth uid",
+    "becomes": {
+      "email/password": "DONE \u2014 enabled and tested. Email confirmation is OFF, so signup returns a session immediately, matching v1 behaviour.",
+      "google": "TODO \u2014 needs a client ID + secret in the Supabase dashboard, and the native iOS/Android config to match. Use signInWithIdToken from supabase_flutter.",
+      "apple": "TODO \u2014 needs a Services ID + key from the Apple Developer account.",
+      "anonymous": "DROPPED (decision, 2026-09-18). Nothing in the v1 UI ever called it \u2014 verified by grep; it was FlutterFlow scaffolding. Not enabled on Supabase.",
+      "github": "DROPPED \u2014 scaffolding, never used.",
+      "jwt": "DROPPED \u2014 scaffolding, never used."
+    },
+    "hardest_part": "Firebase hashes passwords with modified scrypt; Supabase uses bcrypt. Import the Firebase hash parameters, and VERIFY on throwaway accounts before choosing a cutover date. Fallback is a forced password reset for every user.",
+    "import_gotcha": "Imported users MUST be written with email_confirmed_at already set. Firebase treated them as verified; importing them unconfirmed would lock out the entire existing user base."
+  },
+  "id_mapping": {
+    "problem": "Firestore stores relationships as DocumentReference PATHS (\"users/abc123\"). Postgres needs UUIDs.",
+    "solution": "Build an id_map in pass 1 over every collection, then resolve all references in pass 2.",
+    "table": "id_map(collection text, firestore_id text, uuid uuid, primary key (collection, firestore_id))",
+    "special_case_users": "profiles.id MUST equal the auth.users.id created by the auth import \u2014 NOT a fresh uuid. Run the auth migration FIRST, then seed id_map for users from its output.",
+    "keep_after_migration": "yes \u2014 it makes verification, re-runs and rollback possible"
+  },
+  "collections": {
+    "users": {
+      "description": "One document per member. Doc id == Firebase Auth uid.",
+      "security_rule_today": "create/read/write/delete only if request.auth.uid == documentId",
+      "migrates_to": "profiles",
+      "cardinality": "1 doc -> 1 row (+ N children rows)",
+      "document_id": "profiles.id (uuid) \u2014 MUST equal auth.users.id from the auth import",
+      "field_count": 19,
+      "fields_mapped": 18,
+      "fields_dropped": 1,
+      "fields": [
+        {
+          "name": "email",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Login email, mirrored from Firebase Auth.",
+          "migrates_to": "profiles.email",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "display_name",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Parent/member display name.",
+          "migrates_to": "profiles.display_name",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "uid",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Firebase Auth uid. DUPLICATE of the document id.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "duplicate of the document id, which becomes profiles.id"
+        },
+        {
+          "name": "created_time",
+          "firestore_type": "timestamp",
+          "dart_type": "DateTime",
+          "what_it_is": "Signup timestamp.",
+          "migrates_to": "profiles.created_at",
+          "target_type": "timestamptz",
+          "transform": "rename",
+          "migration_note": ""
+        },
+        {
+          "name": "phone_number",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Contact phone.",
+          "migrates_to": "profiles.phone_number",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "state",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "US state, free text. Values come from settings.list_state.",
+          "migrates_to": "profiles.state",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": "FK to us_states.code once values are cleaned"
+        },
+        {
+          "name": "region",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Region/area, free text.",
+          "migrates_to": "profiles.region",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "total_lawns",
+          "firestore_type": "number (int)",
+          "dart_type": "int",
+          "what_it_is": "DENORMALIZED count. Written by the CLIENT - forgeable.",
+          "migrates_to": "profiles.total_lawns",
+          "target_type": "integer",
+          "transform": "import then RECOMPUTE",
+          "migration_note": "after import a trigger owns this column; the client can never write it again"
+        },
+        {
+          "name": "shirt_level",
+          "firestore_type": "string (enum ShirtLevel)",
+          "dart_type": "ShirtLevel",
+          "what_it_is": "Current shirt level. Enum stored as a string.",
+          "migrates_to": "profiles.current_badge_level_id",
+          "target_type": "uuid FK badge_levels",
+          "transform": "lookup by name",
+          "migration_note": ""
+        },
+        {
+          "name": "is_hall_of_fame",
+          "firestore_type": "boolean",
+          "dart_type": "bool",
+          "what_it_is": "Flag shown on the Hall of Fame page.",
+          "migrates_to": "profiles.is_hall_of_fame",
+          "target_type": "boolean",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "role",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Free-text role string. Not enforced anywhere.",
+          "migrates_to": "user_roles.role",
+          "target_type": "app_role enum",
+          "transform": "MOVE + cast",
+          "migration_note": "leaves profiles entirely"
+        },
+        {
+          "name": "updated_at",
+          "firestore_type": "timestamp",
+          "dart_type": "DateTime",
+          "what_it_is": "Last profile edit.",
+          "migrates_to": "profiles.updated_at",
+          "target_type": "timestamptz",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "total_hours",
+          "firestore_type": "number (double)",
+          "dart_type": "double",
+          "what_it_is": "DENORMALIZED sum of lawns.hours_taken. Written by the CLIENT.",
+          "migrates_to": "profiles.total_hours",
+          "target_type": "numeric",
+          "transform": "import then RECOMPUTE",
+          "migration_note": "same as total_lawns"
+        },
+        {
+          "name": "user_profile",
+          "firestore_type": "map (PhotoDetail)",
+          "dart_type": "PhotoDetailStruct",
+          "what_it_is": "Profile photo as a PhotoDetail map (url + blurhash).",
+          "migrates_to": "profiles.photo_url + profiles.photo_blurhash",
+          "target_type": "text, text",
+          "transform": "FLATTEN map",
+          "migration_note": "PhotoDetail{image, hash_code_image} -> two columns"
+        },
+        {
+          "name": "photo_url",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Second profile photo field. OVERLAPS user_profile.image.",
+          "migrates_to": "profiles.photo_url",
+          "target_type": "text",
+          "transform": "MERGE",
+          "migration_note": "duplicate of user_profile.image \u2014 coalesce, and log rows where they disagree"
+        },
+        {
+          "name": "is_group",
+          "firestore_type": "boolean",
+          "dart_type": "bool",
+          "what_it_is": "True when the account represents several children.",
+          "migrates_to": "profiles.is_group",
+          "target_type": "boolean",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "group_detail",
+          "firestore_type": "array<map (JoinGroup)>",
+          "dart_type": "List<JoinGroupStruct>",
+          "what_it_is": "Array of JoinGroup maps - the children on this account.",
+          "migrates_to": "children[] (new table)",
+          "target_type": "rows",
+          "transform": "EXPLODE array",
+          "migration_note": "one row per JoinGroup map"
+        },
+        {
+          "name": "gender",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Stored as free text (\"Male\"/\"Female\"), not the Gender enum.",
+          "migrates_to": "profiles.gender",
+          "target_type": "gender enum",
+          "transform": "lowercase + cast",
+          "migration_note": "\"Male\"/\"Female\" -> male/female"
+        },
+        {
+          "name": "child_name",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Name of the single child when is_group is false.",
+          "migrates_to": "profiles.child_name",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        }
+      ],
+      "problems_today": [
+        "total_lawns and total_hours are client-written and forgeable",
+        "photo_url and user_profile.image both store a profile photo",
+        "uid duplicates the document id",
+        "role is free text with no enforcement"
+      ]
+    },
+    "lawns": {
+      "description": "One document per lawn submission. The core record of the app.",
+      "security_rule_today": "create: TRUE  read: TRUE  write: false  delete: false",
+      "migrates_to": "lawns",
+      "cardinality": "1 doc -> 1 row + up to 4 lawn_photos rows",
+      "document_id": "lawns.id (uuid from id_map)",
+      "field_count": 10,
+      "fields_mapped": 10,
+      "fields_dropped": 0,
+      "fields": [
+        {
+          "name": "user_ref",
+          "firestore_type": "reference",
+          "dart_type": "DocumentReference",
+          "what_it_is": "POINTS TO users/{id}. Who submitted it.",
+          "points_to": "users",
+          "migrates_to": "lawns.profile_id",
+          "target_type": "uuid FK profiles",
+          "transform": "RESOLVE reference",
+          "migration_note": "users/{id} path -> uuid via id_map"
+        },
+        {
+          "name": "who_for",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Who the lawn was mowed for (category / person).",
+          "migrates_to": "lawns.who_for",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": "FK to mowed_categories once values are cleaned"
+        },
+        {
+          "name": "hours_taken",
+          "firestore_type": "number (double)",
+          "dart_type": "double",
+          "what_it_is": "Hours spent.",
+          "migrates_to": "lawns.hours_taken",
+          "target_type": "numeric",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "photos",
+          "firestore_type": "map (LawnsPhotos)",
+          "dart_type": "LawnsPhotosStruct",
+          "what_it_is": "LawnsPhotos map: before / after / action / homeowner, each a PhotoDetail.",
+          "migrates_to": "lawn_photos[] (new table)",
+          "target_type": "rows",
+          "transform": "EXPLODE struct",
+          "migration_note": "before / after / action / homeowner -> 4 rows keyed by photo_kind"
+        },
+        {
+          "name": "status",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Free text. Intended values: pending | approved | rejected.",
+          "migrates_to": "lawns.status",
+          "target_type": "lawn_status enum",
+          "transform": "lowercase + cast",
+          "migration_note": "AUDIT distinct values first"
+        },
+        {
+          "name": "verified_by",
+          "firestore_type": "reference",
+          "dart_type": "DocumentReference",
+          "what_it_is": "POINTS TO users/{id} - the admin who reviewed it.",
+          "points_to": "users (an admin)",
+          "migrates_to": "lawns.verified_by",
+          "target_type": "uuid FK profiles",
+          "transform": "RESOLVE reference",
+          "migration_note": ""
+        },
+        {
+          "name": "verified_at",
+          "firestore_type": "timestamp",
+          "dart_type": "DateTime",
+          "what_it_is": "Review timestamp.",
+          "migrates_to": "lawns.verified_at",
+          "target_type": "timestamptz",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "created_at",
+          "firestore_type": "timestamp",
+          "dart_type": "DateTime",
+          "what_it_is": "Submission timestamp.",
+          "migrates_to": "lawns.created_at",
+          "target_type": "timestamptz",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "notes",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Admin notes / rejection reason.",
+          "migrates_to": "lawns.notes",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "updated_at",
+          "firestore_type": "timestamp",
+          "dart_type": "DateTime",
+          "what_it_is": "Last change.",
+          "migrates_to": "lawns.updated_at",
+          "target_type": "timestamptz",
+          "transform": "copy",
+          "migration_note": ""
+        }
+      ],
+      "problems_today": [
+        "status is free text, not an enum",
+        "photos is a nested map of maps; each PhotoDetail holds only a url + blurhash"
+      ]
+    },
+    "shirt_requests": {
+      "description": "A member asking to be sent the shirt for a level they reached.",
+      "security_rule_today": "create: TRUE  read: TRUE  write: false  delete: false",
+      "migrates_to": "badge_requests",
+      "cardinality": "1 doc -> 1 row + N badge_request_children rows",
+      "document_id": "badge_requests.id (uuid from id_map)",
+      "field_count": 12,
+      "fields_mapped": 11,
+      "fields_dropped": 1,
+      "fields": [
+        {
+          "name": "user_ref",
+          "firestore_type": "reference",
+          "dart_type": "DocumentReference",
+          "what_it_is": "POINTS TO users/{id}.",
+          "points_to": "users",
+          "migrates_to": "badge_requests.profile_id",
+          "target_type": "uuid FK profiles",
+          "transform": "RESOLVE reference",
+          "migration_note": ""
+        },
+        {
+          "name": "child_name",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Child the shirt is for.",
+          "migrates_to": "badge_requests.child_name",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "state",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Copied from the user at request time.",
+          "migrates_to": "badge_requests.state",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": "snapshot at request time \u2014 keep, do not join"
+        },
+        {
+          "name": "region",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Copied from the user at request time.",
+          "migrates_to": "badge_requests.region",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": "snapshot at request time"
+        },
+        {
+          "name": "shirt_level",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Requested level. STRING here, but an enum on users.shirt_level.",
+          "migrates_to": "badge_requests.badge_level_id",
+          "target_type": "uuid FK badge_levels",
+          "transform": "lookup by name",
+          "migration_note": ""
+        },
+        {
+          "name": "is_group",
+          "firestore_type": "boolean",
+          "dart_type": "bool",
+          "what_it_is": "True when requesting for multiple children.",
+          "migrates_to": "badge_requests.is_group",
+          "target_type": "boolean",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "lawn_count_at_request",
+          "firestore_type": "number (int)",
+          "dart_type": "int",
+          "what_it_is": "Snapshot of users.total_lawns when requested.",
+          "migrates_to": "badge_requests.lawn_count_at_request",
+          "target_type": "integer",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "status",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "pending | approved | rejected | done.",
+          "migrates_to": "badge_requests.status",
+          "target_type": "badge_request_status enum",
+          "transform": "lowercase + cast",
+          "migration_note": "AUDIT first"
+        },
+        {
+          "name": "created_at",
+          "firestore_type": "timestamp",
+          "dart_type": "DateTime",
+          "what_it_is": "Request timestamp.",
+          "migrates_to": "badge_requests.created_at",
+          "target_type": "timestamptz",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "update_at",
+          "firestore_type": "timestamp",
+          "dart_type": "DateTime",
+          "what_it_is": "NOTE the field name: update_at, not updated_at.",
+          "migrates_to": "badge_requests.updated_at",
+          "target_type": "timestamptz",
+          "transform": "RENAME",
+          "migration_note": "fixes the update_at typo"
+        },
+        {
+          "name": "group_detail",
+          "firestore_type": "array<map (JoinGroup)>",
+          "dart_type": "List<JoinGroupStruct>",
+          "what_it_is": "Array of JoinGroup maps - sizes/genders per child.",
+          "migrates_to": "badge_request_children[] (new table)",
+          "target_type": "rows",
+          "transform": "EXPLODE array",
+          "migration_note": ""
+        },
+        {
+          "name": "name",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Requester name, denormalized from users.display_name.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "denormalized users.display_name \u2014 available via join to profiles"
+        }
+      ],
+      "problems_today": [
+        "shirt_level is a String here but an enum on users - inconsistent",
+        "field is update_at, not updated_at"
+      ]
+    },
+    "shirt_levels": {
+      "description": "Lookup table of shirt tiers. Small, admin-managed.",
+      "security_rule_today": "create: TRUE  read: TRUE  write: false  delete: false",
+      "migrates_to": "badge_levels",
+      "cardinality": "1 doc -> 1 row",
+      "document_id": "badge_levels.id (uuid from id_map)",
+      "field_count": 4,
+      "fields_mapped": 4,
+      "fields_dropped": 0,
+      "fields": [
+        {
+          "name": "min_lawns",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Lawns required to unlock. STORED AS A STRING - should be a number.",
+          "migrates_to": "badge_levels.min_lawns",
+          "target_type": "integer",
+          "transform": "CAST String -> int",
+          "migration_note": "fails the import if any value is non-numeric"
+        },
+        {
+          "name": "description",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Level blurb shown in the app.",
+          "migrates_to": "badge_levels.description",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "image_url",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Shirt artwork.",
+          "migrates_to": "badge_levels.image_url",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "name",
+          "firestore_type": "string (enum ShirtLevel)",
+          "dart_type": "ShirtLevel",
+          "what_it_is": "Level key. Enum stored as a string.",
+          "migrates_to": "badge_levels.name + badge_levels.sort_order",
+          "target_type": "text, integer",
+          "transform": "copy + derive",
+          "migration_note": "sort_order from the enum order: starter,orange,green,blue,red,black"
+        }
+      ],
+      "problems_today": [
+        "min_lawns is a STRING - sorts as text, so \"100\" < \"50\""
+      ]
+    },
+    "leaderboards": {
+      "description": "One document per region holding a precomputed top-N array.",
+      "security_rule_today": "create: TRUE  read: TRUE  write: false  delete: false",
+      "migrates_to": "DELETED \u2014 replaced by the `leaderboard` SQL view",
+      "cardinality": "collection removed",
+      "document_id": "n/a",
+      "field_count": 4,
+      "fields_mapped": 1,
+      "fields_dropped": 3,
+      "fields": [
+        {
+          "name": "region",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Region this leaderboard covers.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "becomes the view PARTITION BY profiles.region"
+        },
+        {
+          "name": "last_updated",
+          "firestore_type": "timestamp",
+          "dart_type": "DateTime",
+          "what_it_is": "When the array was last rebuilt.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "the view is always live, so there is nothing to timestamp"
+        },
+        {
+          "name": "top_users",
+          "firestore_type": "array<map (TopUsers)>",
+          "dart_type": "List<TopUsersStruct>",
+          "what_it_is": "Array of TopUsers maps. DENORMALIZED - goes stale.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "every column is recomputed by the view \u2014 do not migrate"
+        },
+        {
+          "name": "star_of_month",
+          "firestore_type": "reference",
+          "dart_type": "DocumentReference",
+          "what_it_is": "POINTS TO users/{id} - featured member.",
+          "points_to": "users",
+          "migrates_to": "featured_members.profile_id",
+          "target_type": "uuid FK profiles",
+          "transform": "MOVE",
+          "migration_note": "the one thing the view cannot derive: an editorial pick"
+        }
+      ],
+      "problems_today": [
+        "fully denormalized; must be rebuilt on a timer and is stale in between"
+      ]
+    },
+    "announcement": {
+      "description": "News and announcement posts. Collection name is SINGULAR.",
+      "security_rule_today": "create: TRUE  read: TRUE  write: false  delete: false",
+      "migrates_to": "announcements",
+      "cardinality": "1 doc -> 1 row",
+      "document_id": "announcements.id (uuid from id_map)",
+      "field_count": 8,
+      "fields_mapped": 8,
+      "fields_dropped": 0,
+      "fields": [
+        {
+          "name": "title",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Headline.",
+          "migrates_to": "announcements.title",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "description",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Body text.",
+          "migrates_to": "announcements.description",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "type",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "article | video.",
+          "migrates_to": "announcements.type",
+          "target_type": "announcement_type enum",
+          "transform": "lowercase + cast",
+          "migration_note": ""
+        },
+        {
+          "name": "article_link",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "External article URL.",
+          "migrates_to": "announcements.article_link",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "image_detail",
+          "firestore_type": "map (PhotoDetail)",
+          "dart_type": "PhotoDetailStruct",
+          "what_it_is": "Cover image as a PhotoDetail map.",
+          "migrates_to": "announcements.image_url + announcements.image_blurhash",
+          "target_type": "text, text",
+          "transform": "FLATTEN map",
+          "migration_note": ""
+        },
+        {
+          "name": "created_at",
+          "firestore_type": "timestamp",
+          "dart_type": "DateTime",
+          "what_it_is": "Publish timestamp.",
+          "migrates_to": "announcements.created_at",
+          "target_type": "timestamptz",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "update_at",
+          "firestore_type": "timestamp",
+          "dart_type": "DateTime",
+          "what_it_is": "NOTE the field name: update_at, not updated_at.",
+          "migrates_to": "announcements.updated_at",
+          "target_type": "timestamptz",
+          "transform": "RENAME",
+          "migration_note": "fixes the update_at typo"
+        },
+        {
+          "name": "video_link",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Video URL (YouTube).",
+          "migrates_to": "announcements.video_link",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        }
+      ],
+      "problems_today": [
+        "collection name is singular while every other one is plural",
+        "field is update_at, not updated_at"
+      ]
+    },
+    "notifications": {
+      "description": "In-app notification feed rows.",
+      "security_rule_today": "create: TRUE  read: TRUE  write: TRUE  delete: TRUE",
+      "migrates_to": "notifications",
+      "cardinality": "1 doc -> 1 row",
+      "document_id": "notifications.id (uuid from id_map)",
+      "field_count": 12,
+      "fields_mapped": 9,
+      "fields_dropped": 3,
+      "fields": [
+        {
+          "name": "notification",
+          "firestore_type": "reference",
+          "dart_type": "DocumentReference",
+          "what_it_is": "POINTS TO users/{id}. Badly named: this is the RECIPIENT.",
+          "points_to": "users (the RECIPIENT)",
+          "migrates_to": "notifications.profile_id",
+          "target_type": "uuid FK profiles",
+          "transform": "RESOLVE + RENAME",
+          "migration_note": "this field is the RECIPIENT despite its name"
+        },
+        {
+          "name": "title",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Notification title.",
+          "migrates_to": "notifications.title",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "body",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Notification body.",
+          "migrates_to": "notifications.body",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "type",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Free-text category.",
+          "migrates_to": "notifications.type",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": "candidate for an enum after auditing"
+        },
+        {
+          "name": "shirt_request_ref",
+          "firestore_type": "reference",
+          "dart_type": "DocumentReference",
+          "what_it_is": "POINTS TO shirt_requests/{id}.",
+          "points_to": "shirt_requests",
+          "migrates_to": "notifications.badge_request_id",
+          "target_type": "uuid FK badge_requests",
+          "transform": "RESOLVE + RENAME",
+          "migration_note": ""
+        },
+        {
+          "name": "state",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Denormalized from the user.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "denormalized from the user \u2014 available via join"
+        },
+        {
+          "name": "region",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Denormalized from the user.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "denormalized from the user \u2014 available via join"
+        },
+        {
+          "name": "shirt_level",
+          "firestore_type": "string (enum ShirtLevel)",
+          "dart_type": "ShirtLevel",
+          "what_it_is": "Enum stored as a string.",
+          "migrates_to": "notifications.badge_level_id",
+          "target_type": "uuid FK badge_levels",
+          "transform": "lookup by name",
+          "migration_note": "nullable"
+        },
+        {
+          "name": "status",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Free-text status.",
+          "migrates_to": "notifications.status",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": "keep until distinct values are audited"
+        },
+        {
+          "name": "is_read",
+          "firestore_type": "boolean",
+          "dart_type": "bool",
+          "what_it_is": "Read receipt.",
+          "migrates_to": "notifications.is_read",
+          "target_type": "boolean",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "created_at",
+          "firestore_type": "timestamp",
+          "dart_type": "DateTime",
+          "what_it_is": "Timestamp.",
+          "migrates_to": "notifications.created_at",
+          "target_type": "timestamptz",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "user_name",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Denormalized display name.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "denormalized users.display_name \u2014 available via join"
+        }
+      ],
+      "problems_today": [
+        "the recipient field is named \"notification\"",
+        "rules allow ANY client to read, write and delete ANY row"
+      ]
+    },
+    "admins": {
+      "description": "Admin accounts. WORLD-READABLE and client-creatable today.",
+      "security_rule_today": "create: TRUE  read: TRUE  write: false  delete: false",
+      "migrates_to": "user_roles",
+      "cardinality": "1 doc -> 1 row (the person already exists in profiles)",
+      "document_id": "user_roles.profile_id is the PK \u2014 no separate id",
+      "field_count": 8,
+      "fields_mapped": 5,
+      "fields_dropped": 3,
+      "fields": [
+        {
+          "name": "user_ref",
+          "firestore_type": "reference",
+          "dart_type": "DocumentReference",
+          "what_it_is": "POINTS TO users/{id}.",
+          "points_to": "users",
+          "migrates_to": "user_roles.profile_id",
+          "target_type": "uuid PK FK profiles",
+          "transform": "RESOLVE reference",
+          "migration_note": ""
+        },
+        {
+          "name": "email",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Admin email.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "already on profiles.email"
+        },
+        {
+          "name": "name",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Admin name.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "already on profiles.display_name"
+        },
+        {
+          "name": "photo_url",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Avatar.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "already on profiles.photo_url"
+        },
+        {
+          "name": "role",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Free-text role.",
+          "migrates_to": "user_roles.role",
+          "target_type": "app_role enum",
+          "transform": "cast",
+          "migration_note": "free text -> member|admin|super_admin"
+        },
+        {
+          "name": "active",
+          "firestore_type": "boolean",
+          "dart_type": "bool",
+          "what_it_is": "Enable/disable the admin.",
+          "migrates_to": "user_roles.active",
+          "target_type": "boolean",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "assigned_region",
+          "firestore_type": "string",
+          "dart_type": "String",
+          "what_it_is": "Region this admin moderates.",
+          "migrates_to": "user_roles.assigned_region",
+          "target_type": "text",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "created_at",
+          "firestore_type": "timestamp",
+          "dart_type": "DateTime",
+          "what_it_is": "Timestamp.",
+          "migrates_to": "user_roles.created_at",
+          "target_type": "timestamptz",
+          "transform": "copy",
+          "migration_note": ""
+        }
+      ],
+      "problems_today": [
+        "world-readable and client-creatable: anyone can read the admin list",
+        "admin identity belongs in an auth custom claim, not a public collection"
+      ]
+    },
+    "settings": {
+      "description": "Single configuration document for the whole app.",
+      "security_rule_today": "create: TRUE  read: TRUE  write: false  delete: false",
+      "migrates_to": "app_settings + 3 lookup tables",
+      "cardinality": "1 doc -> 1 app_settings row + N rows across 3 lookup tables",
+      "document_id": "app_settings uses a single-row guard: id boolean primary key default true",
+      "field_count": 8,
+      "fields_mapped": 6,
+      "fields_dropped": 2,
+      "fields": [
+        {
+          "name": "max_lawn_photos",
+          "firestore_type": "number (int)",
+          "dart_type": "int",
+          "what_it_is": "Photo cap on a submission.",
+          "migrates_to": "app_settings.max_lawn_photos",
+          "target_type": "integer",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "auto_shirt_unlock",
+          "firestore_type": "boolean",
+          "dart_type": "bool",
+          "what_it_is": "Whether shirts unlock without admin approval.",
+          "migrates_to": "app_settings.auto_badge_unlock",
+          "target_type": "boolean",
+          "transform": "RENAME",
+          "migration_note": "shirt -> badge"
+        },
+        {
+          "name": "auto_leaderboard_refresh",
+          "firestore_type": "boolean",
+          "dart_type": "bool",
+          "what_it_is": "Whether the leaderboard array auto-rebuilds.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "the leaderboard is a live view; nothing to refresh"
+        },
+        {
+          "name": "refresh_interval_hours",
+          "firestore_type": "number (int)",
+          "dart_type": "int",
+          "what_it_is": "Leaderboard rebuild interval.",
+          "migrates_to": "\u2014 DROPPED \u2014",
+          "target_type": null,
+          "transform": "DROP",
+          "migration_note": "same reason"
+        },
+        {
+          "name": "allow_dynamic_categories",
+          "firestore_type": "boolean",
+          "dart_type": "bool",
+          "what_it_is": "Allow free-text \"who for\" values.",
+          "migrates_to": "app_settings.allow_dynamic_categories",
+          "target_type": "boolean",
+          "transform": "copy",
+          "migration_note": ""
+        },
+        {
+          "name": "allow_mowed_categories",
+          "firestore_type": "array<string>",
+          "dart_type": "List<String>",
+          "what_it_is": "Array of allowed \"who for\" values. A LOOKUP TABLE in an array.",
+          "migrates_to": "mowed_categories[] (new table)",
+          "target_type": "rows",
+          "transform": "EXPLODE array",
+          "migration_note": ""
+        },
+        {
+          "name": "list_state",
+          "firestore_type": "array<string>",
+          "dart_type": "List<String>",
+          "what_it_is": "Array of US states. A LOOKUP TABLE in an array.",
+          "migrates_to": "us_states[] (new table)",
+          "target_type": "rows",
+          "transform": "EXPLODE array",
+          "migration_note": ""
+        },
+        {
+          "name": "find_lawns",
+          "firestore_type": "array<map (FindLawns)>",
+          "dart_type": "List<FindLawnsStruct>",
+          "what_it_is": "Array of FindLawns maps - \"how to find lawns\" tips.",
+          "migrates_to": "find_lawn_tips[] (new table)",
+          "target_type": "rows",
+          "transform": "EXPLODE array",
+          "migration_note": ""
+        }
+      ],
+      "problems_today": [
+        "three lookup tables (categories, states, tips) are stored as arrays in one doc"
+      ]
+    }
+  },
+  "subcollections": {
+    "users/{uid}/fcm_tokens": {
+      "description": "Device push tokens, written by the addFcmToken callable function.",
+      "migrates_to": "device_tokens",
+      "fields": [
+        {
+          "name": "fcm_token",
+          "firestore_type": "string",
+          "migrates_to": "device_tokens.fcm_token",
+          "target_type": "text unique"
+        },
+        {
+          "name": "device_type",
+          "firestore_type": "string",
+          "migrates_to": "device_tokens.device_type",
+          "target_type": "text"
+        },
+        {
+          "name": "created_at",
+          "firestore_type": "timestamp",
+          "migrates_to": "device_tokens.created_at",
+          "target_type": "timestamptz"
+        },
+        {
+          "name": "(parent doc id)",
+          "firestore_type": "path",
+          "migrates_to": "device_tokens.profile_id",
+          "target_type": "uuid FK profiles"
+        }
+      ],
+      "note": "Optional to migrate \u2014 tokens expire anyway, so skipping costs users one re-registration on first launch."
+    }
+  },
+  "internal_collections": {
+    "ff_push_notifications": "FlutterFlow push queue, drained by sendPushNotificationsTrigger. NOT migrated.",
+    "ff_user_push_notifications": "Per-user push queue, drained by sendUserPushNotificationsTrigger. NOT migrated."
+  },
+  "structs": {
+    "photo_detail": {
+      "description": "Every image in the app. image = download URL, hash_code_image = blurhash placeholder.",
+      "used_by": [
+        "users.user_profile",
+        "announcement.image_detail",
+        "lawns.photos.*"
+      ],
+      "becomes": "two columns wherever it appears: <name>_url and <name>_blurhash",
+      "fields": [
+        {
+          "name": "image",
+          "firestore_type": "string",
+          "migrates_to": "<name>_url (text)"
+        },
+        {
+          "name": "hash_code_image",
+          "firestore_type": "string",
+          "migrates_to": "<name>_blurhash (text)"
+        }
+      ]
+    },
+    "lawns_photos": {
+      "description": "The four required proof photos on a lawn submission.",
+      "used_by": [
+        "lawns.photos"
+      ],
+      "becomes": "rows in the new lawn_photos table, one per populated slot",
+      "fields": [
+        {
+          "name": "before",
+          "firestore_type": "map (PhotoDetail)",
+          "migrates_to": "lawn_photos row, photo_kind='before'"
+        },
+        {
+          "name": "after",
+          "firestore_type": "map (PhotoDetail)",
+          "migrates_to": "lawn_photos row, photo_kind='after'"
+        },
+        {
+          "name": "action",
+          "firestore_type": "map (PhotoDetail)",
+          "migrates_to": "lawn_photos row, photo_kind='action'"
+        },
+        {
+          "name": "homeowner",
+          "firestore_type": "map (PhotoDetail)",
+          "migrates_to": "lawn_photos row, photo_kind='homeowner'"
+        }
+      ]
+    },
+    "join_group": {
+      "description": "One child on a group account or group badge request.",
+      "used_by": [
+        "users.group_detail",
+        "shirt_requests.group_detail"
+      ],
+      "becomes": "rows in children (from users) or badge_request_children (from badge_requests)",
+      "fields": [
+        {
+          "name": "child_name",
+          "firestore_type": "string",
+          "migrates_to": "name (text)"
+        },
+        {
+          "name": "shirt_size",
+          "firestore_type": "string",
+          "migrates_to": "shirt_size (text)"
+        },
+        {
+          "name": "gender",
+          "firestore_type": "string",
+          "migrates_to": "gender (enum cast)"
+        }
+      ]
+    },
+    "top_users": {
+      "description": "A denormalized leaderboard row embedded in leaderboards.top_users.",
+      "used_by": [
+        "leaderboards.top_users"
+      ],
+      "becomes": "NOTHING \u2014 the leaderboard view derives every one of these columns",
+      "fields": [
+        {
+          "name": "user_ref",
+          "firestore_type": "reference",
+          "migrates_to": "view: profiles.id"
+        },
+        {
+          "name": "name",
+          "firestore_type": "string",
+          "migrates_to": "view: profiles.display_name"
+        },
+        {
+          "name": "photo_url",
+          "firestore_type": "string",
+          "migrates_to": "view: profiles.photo_url"
+        },
+        {
+          "name": "total_lawns",
+          "firestore_type": "number (int)",
+          "migrates_to": "view: profiles.total_lawns"
+        },
+        {
+          "name": "state",
+          "firestore_type": "string",
+          "migrates_to": "view: profiles.state"
+        },
+        {
+          "name": "hash_code_image",
+          "firestore_type": "string",
+          "migrates_to": "view: profiles.photo_blurhash"
+        },
+        {
+          "name": "total_hours",
+          "firestore_type": "number (double)",
+          "migrates_to": "view: profiles.total_hours"
+        }
+      ]
+    },
+    "find_lawns": {
+      "description": "A \"how to find lawns\" tip shown in the app.",
+      "used_by": [
+        "settings.find_lawns"
+      ],
+      "becomes": "rows in find_lawn_tips",
+      "fields": [
+        {
+          "name": "title",
+          "firestore_type": "string",
+          "migrates_to": "title (text)"
+        },
+        {
+          "name": "detail",
+          "firestore_type": "string",
+          "migrates_to": "detail (text)"
+        }
+      ]
+    },
+    "mowed_categories": {
+      "description": "NOT stored in Firestore. Computed in memory by custom_functions.getDuplicate().",
+      "used_by": [
+        "nothing \u2014 in-memory only"
+      ],
+      "becomes": "a SQL query, not a table: select who_for, count(*) from lawns group by who_for",
+      "fields": [
+        {
+          "name": "who",
+          "firestore_type": "string",
+          "migrates_to": "lawns.who_for"
+        },
+        {
+          "name": "num_mow",
+          "firestore_type": "number (int)",
+          "migrates_to": "count(*)"
+        }
+      ]
+    }
+  },
+  "enums": {
+    "_today": "Declared in Dart but stored in Firestore as plain strings. Nothing validates them, and several fields that should use them (lawns.status, shirt_requests.shirt_level, users.gender) are free text.",
+    "_becomes": "Real Postgres enum types. Values are constrained by the database.",
+    "ShirtLevel": {
+      "values": [
+        "starter",
+        "orange",
+        "green",
+        "blue",
+        "red",
+        "black"
+      ],
+      "becomes": "badge_levels rows (a table, not an enum \u2014 levels are admin-editable)"
+    },
+    "ShirtStatus": {
+      "values": [
+        "pending",
+        "approved",
+        "rejected",
+        "done"
+      ],
+      "becomes": "badge_request_status enum"
+    },
+    "AnnouncementType": {
+      "values": [
+        "article",
+        "video"
+      ],
+      "becomes": "announcement_type enum"
+    },
+    "Gender": {
+      "values": [
+        "Male",
+        "Female"
+      ],
+      "becomes": "gender enum (lowercased)"
+    },
+    "_new": {
+      "lawn_status": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "app_role": [
+        "member",
+        "admin",
+        "super_admin"
+      ]
+    }
+  },
+  "new_tables": {
+    "children": "Exploded from users.group_detail. Columns: id, profile_id FK, name, shirt_size, gender.",
+    "badge_request_children": "Exploded from shirt_requests.group_detail. Columns: id, badge_request_id FK, name, shirt_size, gender.",
+    "lawn_photos": "Exploded from lawns.photos. Columns: id, lawn_id FK, photo_kind, url, blurhash, sort_order. A child table rather than four fixed columns, because settings.max_lawn_photos is configurable and the v2 Figma flow shows different photo steps (lawnpic / action / safety).",
+    "user_roles": "Replaces the world-readable admins collection. Surfaced into the JWT so RLS can read it cheaply.",
+    "featured_members": "Holds leaderboards.star_of_month, the one thing the leaderboard view cannot derive. Columns: id, region, profile_id FK, month.",
+    "mowed_categories": "Exploded from settings.allow_mowed_categories.",
+    "us_states": "Exploded from settings.list_state.",
+    "find_lawn_tips": "Exploded from settings.find_lawns.",
+    "app_settings": "The scalar remainder of the settings document, single-row guarded.",
+    "device_tokens": "Replaces the users/{uid}/fcm_tokens subcollection."
+  },
+  "deleted_collections": {
+    "leaderboards": "Replaced by the leaderboard SQL view. star_of_month moves to featured_members; everything else is derived.",
+    "admins": "Replaced by user_roles + a JWT claim. It was world-readable and client-creatable.",
+    "ff_push_notifications": "FlutterFlow push queue \u2014 replaced by a Postgres trigger + Edge Function.",
+    "ff_user_push_notifications": "Same."
+  },
+  "storage": {
+    "today_bucket": "the-50-yard-challenge.firebasestorage.app",
+    "today_paths": "users/{userId}/...",
+    "today_rules": "read: TRUE (public) | write: only the owning user",
+    "holds": "lawn proof photos, profile photos, announcement images",
+    "becomes": "Supabase Storage buckets: lawn-photos, avatars, announcements",
+    "migration": "copy objects while the app still runs on Firebase (slow, safely repeatable), then rewrite every *_url column, then run a final delta copy during the cutover window"
+  },
+  "cloud_functions": {
+    "addFcmToken": {
+      "today": "callable \u2014 registers a device token",
+      "becomes": "a plain insert into device_tokens"
+    },
+    "sendPushNotificationsTrigger": {
+      "today": "firestore trigger on ff_push_notifications",
+      "becomes": "Postgres trigger -> Edge Function -> FCM"
+    },
+    "sendUserPushNotificationsTrigger": {
+      "today": "firestore trigger on ff_user_push_notifications",
+      "becomes": "same Edge Function"
+    },
+    "onUserDeleted": {
+      "today": "auth trigger cleaning up the users doc",
+      "becomes": "unnecessary \u2014 ON DELETE CASCADE from auth.users"
+    },
+    "addUser": {
+      "today": "callable \u2014 admin creates a user",
+      "becomes": "Edge Function using the service role key"
+    },
+    "deleteUser": {
+      "today": "callable \u2014 admin deletes a user",
+      "becomes": "Edge Function using the service role key"
+    },
+    "_unused_dependencies": [
+      "stripe",
+      "braintree",
+      "razorpay",
+      "@mux/mux-node",
+      "@langchain/core",
+      "@langchain/openai",
+      "@langchain/anthropic",
+      "@langchain/google-genai",
+      "@onesignal/node-onesignal"
+    ],
+    "_note": "FCM itself stays. Supabase has no push service, so firebase_messaging and the Firebase project survive for push only."
+  },
+  "indexes_today": [
+    "lawns: user_ref ASC, created_at DESC",
+    "users: role ASC, total_lawns DESC",
+    "fcm_tokens (collection group): fcm_token ASC"
+  ],
+  "import_order": [
+    "1.  auth.users \u2014 MUST be first; it decides every profiles.id",
+    "2.  id_map \u2014 seed from the auth output, then one pass per collection",
+    "3.  badge_levels \u2014 no FKs, and needed to resolve shirt_level strings",
+    "4.  us_states, mowed_categories, find_lawn_tips, app_settings",
+    "5.  profiles \u2014 FK -> auth.users, badge_levels",
+    "6.  user_roles \u2014 FK -> profiles",
+    "7.  children \u2014 FK -> profiles",
+    "8.  lawns \u2014 FK -> profiles (x2)",
+    "9.  lawn_photos \u2014 FK -> lawns",
+    "10. badge_requests \u2014 FK -> profiles, badge_levels",
+    "11. badge_request_children \u2014 FK -> badge_requests",
+    "12. announcements \u2014 no FKs",
+    "13. notifications \u2014 FK -> profiles, badge_requests, badge_levels",
+    "14. featured_members \u2014 FK -> profiles",
+    "15. device_tokens \u2014 FK -> profiles",
+    "16. run recalc_profile_totals() over every profile, then diff against the imported values"
+  ],
+  "data_cleaning_required": [
+    {
+      "field": "lawns.status",
+      "problem": "free text being cast to the lawn_status enum",
+      "action": "SELECT DISTINCT status from the export; decide a mapping for every value found"
+    },
+    {
+      "field": "shirt_requests.status",
+      "problem": "free text being cast to badge_request_status",
+      "action": "same audit"
+    },
+    {
+      "field": "shirt_levels.min_lawns",
+      "problem": "String being cast to integer",
+      "action": "confirm every value parses \u2014 one non-numeric value fails the import"
+    },
+    {
+      "field": "users.gender",
+      "problem": "free text being cast to an enum",
+      "action": "audit for blanks, other casings, and any third value"
+    },
+    {
+      "field": "users.role / admins.role",
+      "problem": "free text being cast to app_role",
+      "action": "audit distinct values; anything unrecognized defaults to member"
+    },
+    {
+      "field": "users.photo_url vs users.user_profile.image",
+      "problem": "two fields hold a profile photo and may disagree",
+      "action": "coalesce, and log every row where both are set and differ"
+    },
+    {
+      "field": "users.state / region",
+      "problem": "free text, to be FK-constrained to us_states later",
+      "action": "audit for typos and casing before adding the constraint"
+    },
+    {
+      "field": "every *_url field",
+      "problem": "they point at Firebase Storage",
+      "action": "rewrite AFTER the file copy; keep the originals for rollback"
+    }
+  ],
+  "verification": [
+    "row count per table == doc count per collection (minus anything intentionally skipped)",
+    "select count(*) from profiles where id not in (select id from auth.users) \u2014 must be 0",
+    "no orphaned references: check the export for refs whose target document is missing",
+    "recomputed profiles.total_lawns == the imported Firestore value, per user \u2014 investigate every mismatch",
+    "sum(hours_taken) matches between Firestore and Postgres",
+    "spot-check 20 random lawns end to end, photos included",
+    "every storage URL returns 200"
+  ],
+  "summary": {
+    "source_collections": 9,
+    "source_fields": 85,
+    "fields_mapped": 72,
+    "fields_dropped": 13,
+    "references_to_resolve": 7,
+    "collections_deleted": 4,
+    "new_tables_created": 10,
+    "collections_readable_by_anyone_today": 8
+  }
+}
