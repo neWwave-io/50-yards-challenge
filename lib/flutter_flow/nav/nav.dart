@@ -17,6 +17,8 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/lat_lng.dart';
 import '/flutter_flow/place.dart';
 import '/flutter_flow/flutter_flow_util.dart';
+import '/features/auth/sign_up/sign_up_children_screen.dart';
+import '/features/auth/sign_up/sign_up_screen.dart';
 import 'serialization_util.dart';
 
 import '/index.dart';
@@ -113,6 +115,18 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: SignUpWidget.routeName,
           path: SignUpWidget.routePath,
           builder: (context, params) => SignUpWidget(),
+        ),
+        FFRoute(
+          name: SignUpScreen.routeName,
+          path: SignUpScreen.routePath,
+          builder: (context, params) => SignUpScreen(
+            onSignIn: () => context.pushNamed(SigninWidget.routeName),
+          ),
+        ),
+        FFRoute(
+          name: SignUpChildrenScreen.routeName,
+          path: SignUpChildrenScreen.routePath,
+          builder: (context, params) => const SignUpChildrenScreen(),
         ),
         FFRoute(
           name: LeaderBoardWidget.routeName,
