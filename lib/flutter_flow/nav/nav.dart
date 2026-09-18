@@ -46,7 +46,11 @@ class AppStateNotifier extends ChangeNotifier {
   /// Otherwise, this will trigger a refresh and interrupt the action(s).
   bool notifyOnAuthChange = true;
 
-  bool get loading => user == null || showSplashImage;
+  // `user == null` simply means "signed out", which is a renderable state —
+  // it must not gate the UI. Treating it as "loading" meant that if the auth
+  // stream was slow, errored, or never emitted, the splash image stayed up
+  // forever and the app never rendered anything.
+  bool get loading => showSplashImage;
   bool get loggedIn => user?.loggedIn ?? false;
   bool get initiallyLoggedIn => initialUser?.loggedIn ?? false;
   bool get shouldRedirect => loggedIn && _redirectLocation != null;

@@ -81,8 +81,10 @@ class _MyAppState extends State<MyApp> {
         _appStateNotifier.update(user);
       });
     jwtTokenStream.listen((_) {});
+    // Guaranteed splash dismissal. Scheduled before any other async work so a
+    // failure elsewhere in start-up cannot leave the user staring at the logo.
     Future.delayed(
-      Duration(milliseconds: 600),
+      const Duration(milliseconds: 600),
       () => _appStateNotifier.stopShowingSplashImage(),
     );
   }
