@@ -52,7 +52,6 @@ class SupabaseAuthUser extends BaseAuthUser {
   }
 }
 
-BaseAuthUser? currentUser;
 
 /// Emits on sign-in, sign-out and token refresh. Named as in v1 so main.dart
 /// is unchanged.
