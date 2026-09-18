@@ -46,7 +46,7 @@ class _NotificationAdminWidgetState extends State<NotificationAdminWidget> {
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _model.notificationsForAll = await queryNotificationsRecordOnce();
       _model.notifications =
-          _model.notificationsForAll!.toList().cast<NotificationsRecord>();
+          (_model.notificationsForAll ?? []).toList().cast<NotificationsRecord>();
       safeSetState(() {});
     });
 

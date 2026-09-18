@@ -1914,7 +1914,7 @@ class _ProfilePageWidgetState extends State<ProfilePageWidget> {
                                                                                         triggerPushNotification(
                                                                                           notificationTitle: '${currentUserDisplayName} has just requested a new shirt!',
                                                                                           notificationText: '${currentUserDisplayName} is wating for your approval to get the shirt!',
-                                                                                          userRefs: _model.admin!.map((e) => e.reference).toList(),
+                                                                                          userRefs: (_model.admin ?? []).map((e) => e.reference).toList(),
                                                                                           initialPageName: 'LoadingPage',
                                                                                           parameterData: {},
                                                                                         );

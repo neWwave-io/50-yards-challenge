@@ -58,7 +58,7 @@ class _HomeAdminWidgetState extends State<HomeAdminWidget> {
       _model.newUsers = await actions.newUsers(
         _model.allUsers?.toList(),
       );
-      _model.user = _model.allUsers!.toList().cast<UsersRecord>();
+      _model.user = (_model.allUsers ?? []).toList().cast<UsersRecord>();
       _model.newUserThisMonth = _model.newUsers;
       safeSetState(() {});
     });

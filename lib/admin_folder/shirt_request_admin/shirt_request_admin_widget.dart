@@ -46,7 +46,7 @@ class _ShirtRequestAdminWidgetState extends State<ShirtRequestAdminWidget>
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _model.shirtsRequest = await queryShirtRequestsRecordOnce();
       _model.request =
-          _model.shirtsRequest!.toList().cast<ShirtRequestsRecord>();
+          (_model.shirtsRequest ?? []).toList().cast<ShirtRequestsRecord>();
       _model.pending = _model.shirtsRequest!
           .where((e) => e.status == ShirtStatus.pending.name)
           .toList()

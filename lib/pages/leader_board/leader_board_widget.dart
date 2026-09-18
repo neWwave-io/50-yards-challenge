@@ -84,7 +84,7 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget>
       ).then((s) => s.firstOrNull);
       _model.loading = false;
       _model.topUsers =
-          _model.topusers!.topUsers.toList().cast<TopUsersStruct>();
+          (_model.topusers?.topUsers ?? []).toList().toList().cast<TopUsersStruct>();
       safeSetState(() {});
     });
 

@@ -56,7 +56,7 @@ class _HallOfFameWidgetState extends State<HallOfFameWidget>
           isEqualTo: true,
         ),
       );
-      _model.users = _model.usersHallOfFame!.toList().cast<UsersRecord>();
+      _model.users = (_model.usersHallOfFame ?? []).toList().cast<UsersRecord>();
       safeSetState(() {});
     });
 

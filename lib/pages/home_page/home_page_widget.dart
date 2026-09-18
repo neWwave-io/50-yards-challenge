@@ -60,10 +60,14 @@ class _HomePageWidgetState extends State<HomePageWidget> {
       _model.setting2 = await querySettingsRecordOnce(
         singleRecord: true,
       ).then((s) => s.firstOrNull);
-      FFAppState().optionMowed =
-          _model.setting2!.allowMowedCategories.toList().cast<String>();
-      FFAppState().listStates =
-          _model.setting2!.listState.toList().cast<String>();
+      // Empty database (nothing imported yet) must not crash the home page.
+      final setting2 = _model.setting2;
+      if (setting2 != null) {
+        FFAppState().optionMowed =
+            setting2.allowMowedCategories.toList().cast<String>();
+        FFAppState().listStates =
+            setting2.listState.toList().cast<String>();
+      }
       safeSetState(() {});
       _model.lawns = functions
           .getDuplicate(_model.userLawn?.toList(),

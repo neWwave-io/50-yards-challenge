@@ -1,6 +1,7 @@
 import '/auth/base_auth_user_provider.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import '/backend/backend.dart';
+import '/backend/schema/users_record.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -44,22 +45,48 @@ class _LoadingPageWidgetState extends State<LoadingPageWidget>
 
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      if (loggedIn == true) {
+      if (loggedIn != true) {
+        context.pushNamed(SigninWidget.routeName);
+        return;
+      }
+
+      // Settings and the user's profile are best-effort. An empty database
+      // (nothing imported yet) must NOT strand the user on this screen, so
+      // every step is guarded and navigation always happens.
+      try {
         _model.settings = await querySettingsRecordOnce(
           singleRecord: true,
         ).then((s) => s.firstOrNull);
-        FFAppState().listStates =
-            _model.settings!.listState.toList().cast<String>();
-        FFAppState().optionMowed =
-            _model.settings!.allowMowedCategories.toList().cast<String>();
-        safeSetState(() {});
-        if (valueOrDefault(currentUserDocument?.role, '') == 'admin') {
-          context.pushNamed(HomeAdminWidget.routeName);
-        } else {
-          context.pushNamed(HomePageWidget.routeName);
+        final settings = _model.settings;
+        if (settings != null) {
+          FFAppState().listStates = settings.listState.toList().cast<String>();
+          FFAppState().optionMowed =
+              settings.allowMowedCategories.toList().cast<String>();
         }
+      } catch (e) {
+        debugPrint('Could not load settings, continuing anyway: $e');
+      }
+
+      // currentUserDocument is filled in by authenticatedUserStream, which may
+      // not have emitted yet immediately after sign-in. Fetch it directly so
+      // the admin check is correct on a cold start.
+      try {
+        final ref = currentUserReference;
+        if (currentUserDocument == null && ref != null) {
+          currentUserDocument = await UsersRecord.getDocumentOnceOrNull(ref);
+        }
+      } catch (e) {
+        debugPrint('Could not load profile, continuing anyway: $e');
+      }
+
+      if (!context.mounted) return;
+      safeSetState(() {});
+
+      final role = valueOrDefault(currentUserDocument?.role, '');
+      if (role == 'admin' || role == 'super_admin') {
+        context.pushNamed(HomeAdminWidget.routeName);
       } else {
-        context.pushNamed(SigninWidget.routeName);
+        context.pushNamed(HomePageWidget.routeName);
       }
     });
 
