@@ -1,19 +1,24 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:the_50_yard_challenge/features/auth/auth_screen.dart';
+import 'package:the_50_yard_challenge/backend/supabase_compat/compat_types.dart';
 
 void main() {
-  testWidgets('auth screen renders sign-up form', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: AuthScreen()));
-    expect(find.text('Create your account'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'Create account'), findsOneWidget);
+  test('DocumentReference keeps the v1 path format', () {
+    const ref = DocumentReference('v1_users', 'abc123');
+    expect(ref.path, 'v1_users/abc123');
+    expect(ref.id, 'abc123');
   });
 
-  testWidgets('toggles to sign in', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: AuthScreen()));
-    await tester.tap(find.text('Already have an account? Sign in'));
-    await tester.pumpAndSettle();
-    expect(find.text('Welcome back'), findsOneWidget);
+  test('Query is immutable as the v1 queryBuilder lambdas assume', () {
+    const base = Query('v1_lawns');
+    final filtered = base.where('status', isEqualTo: 'approved');
+    expect(base.filters, isEmpty);
+    expect(filtered.filters.length, 1);
+  });
+
+  test('FieldValue.increment carries its amount', () {
+    final fv = FieldValue.increment(3);
+    expect(fv.kind, 'increment');
+    expect(fv.value, 3);
   });
 }
