@@ -9,6 +9,7 @@ import '/backend/schema/structs/index.dart';
 import '/backend/schema/enums/enums.dart';
 
 import '/auth/base_auth_user_provider.dart';
+import '/auth/firebase_auth/auth_util.dart';
 
 import '/backend/push_notifications/push_notifications_handler.dart'
     show PushNotificationsHandler;
@@ -17,6 +18,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/lat_lng.dart';
 import '/flutter_flow/place.dart';
 import '/flutter_flow/flutter_flow_util.dart';
+import '/features/auth/sign_in/sign_in_screen.dart';
 import '/features/auth/sign_up/sign_up_screen.dart';
 import 'serialization_util.dart';
 
@@ -89,7 +91,7 @@ class AppStateNotifier extends ChangeNotifier {
 /// The v2 sign-up, wired to the app's router. Step 2 is pushed by step 1 once
 /// it has the account details, so it has no route of its own.
 SignUpScreen _signUpScreen(BuildContext context) => SignUpScreen(
-      onSignIn: () => context.pushNamed(SigninWidget.routeName),
+      onSignIn: () => context.pushNamed(SignInScreen.routeName),
       onCompleted: () =>
           context.goNamedAuth(LoadingPageWidget.routeName, context.mounted),
     );
@@ -117,9 +119,27 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => HomePageWidget(),
         ),
         FFRoute(
-          name: SigninWidget.routeName,
-          path: SigninWidget.routePath,
-          builder: (context, params) => SigninWidget(),
+          name: SignInScreen.routeName,
+          path: SignInScreen.routePath,
+          builder: (context, params) => SignInScreen(
+            onSignIn: (email, password) async {
+              GoRouter.of(context).prepareAuthEvent();
+              final user =
+                  await authManager.signInWithEmail(context, email, password);
+              if (user == null) {
+                // The auth manager has already shown why.
+                return null;
+              }
+              if (context.mounted) {
+                context.goNamedAuth(
+                    LoadingPageWidget.routeName, context.mounted);
+              }
+              return null;
+            },
+            onForgotPassword: (email) =>
+                authManager.resetPassword(email: email, context: context),
+            onCreateAccount: () => context.pushNamed(SignUpScreen.routeName),
+          ),
         ),
         FFRoute(
           name: SignUpScreen.routeName,

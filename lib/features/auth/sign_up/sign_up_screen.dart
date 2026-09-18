@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/us_cities.dart';
 import '../../../core/constants/us_states.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_link_text.dart';
 import '../../../core/widgets/app_primary_button.dart';
 import '../../../core/widgets/app_select_field.dart';
 import '../../../core/widgets/app_step_progress.dart';
@@ -10,7 +11,6 @@ import '../../../core/widgets/app_text_field.dart';
 import 'sign_up_children_screen.dart';
 import 'sign_up_controller.dart';
 import 'widgets/password_strength_meter.dart';
-import 'widgets/sign_in_prompt.dart';
 
 /// Step 1 of 2: the account and where the family is.
 class SignUpScreen extends StatefulWidget {
@@ -87,7 +87,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           onPressed: _controller.isComplete ? _next : null,
                         ),
                         const SizedBox(height: AppSpacing.xs),
-                        SignInPrompt(onTap: widget.onSignIn),
+                        AppLinkText(
+                          text: 'Already have an account?',
+                          linkText: 'Sign In here',
+                          onTap: widget.onSignIn,
+                        ),
                       ],
                     ),
                   ),

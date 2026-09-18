@@ -1,19 +1,29 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../theme/app_theme.dart';
 
-/// "Already have an account? Sign In here"
-class SignInPrompt extends StatefulWidget {
-  const SignInPrompt({super.key, this.onTap});
+/// A line of body text ending in one tappable, underlined phrase — the
+/// "Already have an account? Sign In here" pattern the auth screens share.
+class AppLinkText extends StatefulWidget {
+  const AppLinkText({
+    super.key,
+    required this.text,
+    required this.linkText,
+    this.onTap,
+  });
 
+  /// The plain part. A trailing space is added before [linkText].
+  final String text;
+
+  final String linkText;
   final VoidCallback? onTap;
 
   @override
-  State<SignInPrompt> createState() => _SignInPromptState();
+  State<AppLinkText> createState() => _AppLinkTextState();
 }
 
-class _SignInPromptState extends State<SignInPrompt> {
+class _AppLinkTextState extends State<AppLinkText> {
   late final TapGestureRecognizer _recognizer;
 
   @override
@@ -34,9 +44,9 @@ class _SignInPromptState extends State<SignInPrompt> {
       TextSpan(
         style: AppTypography.bodySmall,
         children: [
-          const TextSpan(text: 'Already have an account? '),
+          TextSpan(text: '${widget.text} '),
           TextSpan(
-            text: 'Sign In here',
+            text: widget.linkText,
             style: AppTypography.bodySmall.copyWith(
               color: AppColors.olive700,
               decoration: TextDecoration.underline,

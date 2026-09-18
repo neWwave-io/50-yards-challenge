@@ -58,7 +58,7 @@ class _LoadingPageWidgetState extends State<LoadingPageWidget>
           context.pushNamed(HomePageWidget.routeName);
         }
       } else {
-        context.pushNamed(SigninWidget.routeName);
+        context.pushNamed(SignInScreen.routeName);
       }
 
       // Then warm the caches in the background. Failures are non-fatal.

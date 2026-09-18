@@ -48,6 +48,14 @@ abstract final class AppTypography {
   static TextStyle get caption =>
       _onest(size: 10, weight: FontWeight.w400, color: AppColors.neutralText500);
 
+  /// 14 / Regular — the line under a screen title.
+  static TextStyle get subtitle =>
+      _onest(size: 14, weight: FontWeight.w400, color: AppColors.neutralText500);
+
+  /// 10 / Regular — the quietest supporting line on a screen.
+  static TextStyle get footnote =>
+      _onest(size: 10, weight: FontWeight.w400, color: AppColors.neutralText600);
+
   /// 16 / Regular — the "Back" affordance in the top bar.
   static TextStyle get navAction =>
       _onest(size: 16, weight: FontWeight.w400, color: AppColors.textMuted);

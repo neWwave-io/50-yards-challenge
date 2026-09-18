@@ -34,6 +34,9 @@ abstract final class AppColors {
   /// `neutral text/500` — secondary / meta text.
   static const neutralText500 = Color(0xFF737A6C);
 
+  /// `neutral text/600` — the quietest supporting line on a screen.
+  static const neutralText600 = Color(0xFF565C50);
+
   /// `neutral text/900` — headings on light surfaces.
   static const neutralText900 = Color(0xFF11140D);
 
