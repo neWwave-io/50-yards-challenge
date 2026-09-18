@@ -38,15 +38,37 @@ class SignUpRepository {
     } on PostgrestException catch (e) {
       throw SignUpFailure(
         'Your account was created but we could not save your details: '
-        '${e.message}',
+        '${e.message}. Sign in, then open Create Account again and we will '
+        'fill in the rest.',
+      );
+    } catch (e) {
+      // Usually the connection dropping mid-way. Say so, and say that the
+      // account survived, because retrying the same address would otherwise
+      // fail with "already registered" and leave nowhere to go.
+      throw SignUpFailure(
+        'Your account was created but we could not save your details '
+        '(${_describe(e)}). Sign in, then open Create Account again and we '
+        'will fill in the rest.',
       );
     }
   }
 
   Future<User> _createAccount(SignUpDraft account) async {
+    final email = account.email.trim();
+
+    // An earlier attempt may have created the account and then failed to save
+    // the details. We are still signed in as that address, so carry on with
+    // it rather than registering it again — otherwise the family is stuck:
+    // the email is taken and their profile is empty.
+    final signedIn = supabase.auth.currentUser;
+    if (signedIn != null &&
+        (signedIn.email ?? '').toLowerCase() == email.toLowerCase()) {
+      return signedIn;
+    }
+
     try {
       final res = await supabase.auth.signUp(
-        email: account.email.trim(),
+        email: email,
         password: account.password,
         data: {'display_name': account.fullName.trim()},
       );
@@ -57,7 +79,18 @@ class SignUpRepository {
       return user;
     } on AuthException catch (e) {
       throw SignUpFailure(e.message);
+    } on SignUpFailure {
+      rethrow;
+    } catch (e) {
+      throw SignUpFailure('Could not create your account: ${_describe(e)}.');
     }
+  }
+
+  /// Turns a transport-layer object into something a parent can read, without
+  /// throwing away what it actually said.
+  static String _describe(Object error) {
+    final text = error.toString().trim();
+    return text.isEmpty ? error.runtimeType.toString() : text;
   }
 
   Future<void> _writeProfile(
@@ -79,11 +112,16 @@ class SignUpRepository {
       // read them from here.
       'child_name': first?.name,
       'gender': first?.gender?.value,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
+      // updated_at is maintained by the profiles_set_updated_at trigger.
     }).eq('id', profileId);
   }
 
   Future<void> _writeChildren(String profileId, List<Child> children) async {
+    // The screen holds the complete list, so replace rather than append —
+    // that keeps a second run after a half-finished sign-up from doubling
+    // everyone up.
+    await supabase.from('children').delete().eq('profile_id', profileId);
+
     final rows = <Map<String, dynamic>>[];
 
     for (var i = 0; i < children.length; i++) {
@@ -127,7 +165,8 @@ class SignUpRepository {
             ),
           );
       return supabase.storage.from(_avatarsBucket).getPublicUrl(path);
-    } on StorageException {
+    } catch (_) {
+      // Optional by design — a dropped upload must not fail the sign-up.
       return null;
     }
   }
