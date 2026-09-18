@@ -38,7 +38,11 @@ class SignUpStepOneController extends ChangeNotifier {
   }
 
   set state(String? value) {
+    if (_state == value) return;
     _state = value;
+    // Cities are offered per state, so the old choice is now meaningless —
+    // this is what kept "Fresno, Wisconsin" reachable.
+    _city = null;
     notifyListeners();
   }
 

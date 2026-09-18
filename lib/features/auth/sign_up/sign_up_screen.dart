@@ -168,20 +168,24 @@ class _Form extends StatelessWidget {
           onChanged: (value) => controller.relationship = value,
         ),
         const SizedBox(height: AppSpacing.md),
-        AppSelectField(
-          label: 'City',
-          options: kUsCities,
-          value: controller.city,
-          searchable: true,
-          onChanged: (value) => controller.city = value,
-        ),
-        const SizedBox(height: AppSpacing.md),
+        // State comes first: the cities on offer depend on it.
         AppSelectField(
           label: 'State',
           options: kUsStates,
           value: controller.state,
           searchable: true,
           onChanged: (value) => controller.state = value,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        AppSelectField(
+          label: 'City',
+          options: citiesIn(controller.state),
+          value: controller.city,
+          searchable: true,
+          enabled: controller.state != null,
+          placeholder:
+              controller.state == null ? 'Select a state first' : null,
+          onChanged: (value) => controller.city = value,
         ),
       ],
     );

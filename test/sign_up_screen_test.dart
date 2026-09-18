@@ -20,6 +20,9 @@ void main() {
     for (final label in ['Full Name', 'Email', 'Password', 'Confirm Password']) {
       expect(find.text(label), findsOneWidget);
     }
+    // City waits on State.
+    expect(find.text('Select a state first'), findsOneWidget);
+    expect(find.text('City'), findsNothing);
     expect(find.text('Next'), findsOneWidget);
     expect(find.textContaining('Sign In here', findRichText: true),
         findsOneWidget);
@@ -83,6 +86,13 @@ void main() {
     await tester.tap(find.text('Parents'));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('State'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'Search...'), 'Texas');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Texas').last);
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('City'));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -91,13 +101,54 @@ void main() {
     await tester.tap(find.text('Austin').last);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('State'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextField, 'Search...'), 'Texas');
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Texas').last);
-    await tester.pumpAndSettle();
-
     expect(buttonOpacity().opacity, 1.0);
+  });
+
+  testWidgets('City offers only the chosen state and resets when it changes',
+      (tester) async {
+    await pumpScreen(tester);
+
+    // The panel is a lazy list, so search rather than scroll for a row.
+    // [trigger] is whatever the field currently shows — its label while
+    // empty, its value once chosen.
+    Future<void> pick(String trigger, String option) async {
+      await tester.tap(find.text(trigger).hitTestable());
+      await tester.pumpAndSettle();
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Search...'), option);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(option).last);
+      await tester.pumpAndSettle();
+    }
+
+    // find.text also matches the search box's own EditableText, so ask the
+    // panel whether it went empty instead of looking for the row.
+    Future<bool> cityOffers(String city) async {
+      await tester.tap(find.text('City').hitTestable());
+      await tester.pumpAndSettle();
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Search...'), city);
+      await tester.pumpAndSettle();
+      final offered = find.text('No matches').evaluate().isEmpty;
+      await tester.tapAt(const Offset(4, 4)); // dismiss
+      await tester.pumpAndSettle();
+      return offered;
+    }
+
+    await pick('State', 'Wisconsin');
+    expect(await cityOffers('Milwaukee'), isTrue);
+    // Fresno is in California, so Wisconsin must not offer it.
+    expect(await cityOffers('Fresno'), isFalse);
+
+    await pick('City', 'Milwaukee');
+    expect(find.text('Milwaukee'), findsOneWidget);
+
+    // Switching state drops the city that no longer belongs to it.
+    await pick('Wisconsin', 'California');
+    expect(find.text('Milwaukee'), findsNothing);
+    expect(find.text('City'), findsOneWidget);
+
+    expect(await cityOffers('Fresno'), isTrue);
+    expect(await cityOffers('Milwaukee'), isFalse);
   });
 }

@@ -20,6 +20,7 @@ class AppSelectField extends StatefulWidget {
     required this.onChanged,
     this.searchable = false,
     this.enabled = true,
+    this.placeholder,
   });
 
   final String label;
@@ -31,6 +32,10 @@ class AppSelectField extends StatefulWidget {
   final bool searchable;
 
   final bool enabled;
+
+  /// Shown instead of [label] while nothing is chosen. Use it to say why a
+  /// disabled field is disabled.
+  final String? placeholder;
 
   @override
   State<AppSelectField> createState() => _AppSelectFieldState();
@@ -149,7 +154,7 @@ class _AppSelectFieldState extends State<AppSelectField> {
               children: [
                 Expanded(
                   child: Text(
-                    hasValue ? value : widget.label,
+                    hasValue ? value : (widget.placeholder ?? widget.label),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: hasValue
