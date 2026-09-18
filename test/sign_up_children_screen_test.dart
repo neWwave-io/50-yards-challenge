@@ -1,17 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:the_50_yard_challenge/core/constants/child_options.dart';
 import 'package:the_50_yard_challenge/features/auth/sign_up/child.dart';
+import 'package:the_50_yard_challenge/features/auth/sign_up/data/sign_up_draft.dart';
+import 'package:the_50_yard_challenge/features/auth/sign_up/data/sign_up_repository.dart';
 import 'package:the_50_yard_challenge/features/auth/sign_up/sign_up_children_screen.dart';
 
+const _account = SignUpDraft(
+  fullName: 'Chris Baker',
+  email: 'chris@example.com',
+  password: 'Mow50Lawns!',
+  relationship: 'Parents',
+  city: 'Austin',
+  state: 'Texas',
+);
+
+/// Records what the screen would have sent, without touching Supabase.
+class RecordingSignUpRepository implements SignUpRepository {
+  SignUpDraft? account;
+  List<Child>? children;
+
+  @override
+  Future<void> signUp({
+    required SignUpDraft account,
+    required List<Child> children,
+  }) async {
+    this.account = account;
+    this.children = children;
+  }
+}
+
 void main() {
-  Future<void> pumpScreen(WidgetTester tester, {ValueChanged<List<Child>>? onSubmit}) async {
+  Future<RecordingSignUpRepository> pumpScreen(
+    WidgetTester tester, {
+    VoidCallback? onCompleted,
+  }) async {
     tester.view.physicalSize = const Size(393, 852);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
+
+    final repository = RecordingSignUpRepository();
     await tester.pumpWidget(
-      MaterialApp(home: SignUpChildrenScreen(onSubmit: onSubmit)),
+      MaterialApp(
+        home: SignUpChildrenScreen(
+          account: _account,
+          repository: repository,
+          onCompleted: onCompleted,
+        ),
+      ),
     );
     await tester.pumpAndSettle();
+    return repository;
   }
 
   /// Fills in the entry card that is currently open and commits it.
@@ -60,10 +99,10 @@ void main() {
     expect(find.widgetWithText(TextField, 'Emma'), findsOneWidget);
   });
 
-  testWidgets('a completed child collapses into a summary card',
+  testWidgets('a completed child collapses into a summary card, then signs up',
       (tester) async {
-    List<Child>? submitted;
-    await pumpScreen(tester, onSubmit: (c) => submitted = c);
+    var completed = false;
+    final repository = await pumpScreen(tester, onCompleted: () => completed = true);
 
     // Submitting a name on the "Child Name" field opens the entry card.
     await tester.enterText(
@@ -85,9 +124,11 @@ void main() {
     await tester.tap(find.text('Sign up'));
     await tester.pumpAndSettle();
 
-    expect(submitted, isNotNull);
-    expect(submitted!.single.name, 'Emma');
-    expect(submitted!.single.shirtSize, 'Youth Large');
+    expect(repository.account, same(_account));
+    expect(repository.children!.single.name, 'Emma');
+    expect(repository.children!.single.shirtSize, 'Youth Large');
+    expect(repository.children!.single.gender, ChildGender.female);
+    expect(completed, isTrue);
   });
 
   testWidgets('Remove drops the child', (tester) async {

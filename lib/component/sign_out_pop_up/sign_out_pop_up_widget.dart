@@ -112,7 +112,7 @@ class _SignOutPopUpWidgetState extends State<SignOutPopUpWidget> {
                 await authManager.signOut();
                 GoRouter.of(context).clearRedirectLocation();
 
-                context.goNamedAuth(SignUpWidget.routeName, context.mounted);
+                context.goNamedAuth(SignUpScreen.routeName, context.mounted);
 
                 Navigator.pop(context);
               },

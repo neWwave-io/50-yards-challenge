@@ -687,7 +687,7 @@ class _SigninWidgetState extends State<SigninWidget> {
                     hoverColor: Colors.transparent,
                     highlightColor: Colors.transparent,
                     onTap: () async {
-                      context.pushNamed(SignUpWidget.routeName);
+                      context.pushNamed(SignUpScreen.routeName);
                     },
                     child: Row(
                       mainAxisSize: MainAxisSize.max,

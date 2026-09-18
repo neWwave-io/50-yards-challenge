@@ -1,7 +1,7 @@
 // Export pages
 export '/pages/home_page/home_page_widget.dart' show HomePageWidget;
 export '/auth/signin/signin_widget.dart' show SigninWidget;
-export '/auth/sign_up/sign_up_widget.dart' show SignUpWidget;
+export '/features/auth/sign_up/sign_up_screen.dart' show SignUpScreen;
 export '/pages/leader_board/leader_board_widget.dart' show LeaderBoardWidget;
 export '/bin/how_to_sumit_old/how_to_sumit_old_widget.dart'
     show HowToSumitOldWidget;

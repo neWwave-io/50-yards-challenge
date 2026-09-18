@@ -417,7 +417,7 @@ class _LeaderboardAdminWidgetState extends State<LeaderboardAdminWidget> {
                                   GoRouter.of(context).clearRedirectLocation();
 
                                   context.goNamedAuth(
-                                      SignUpWidget.routeName, context.mounted);
+                                      SignUpScreen.routeName, context.mounted);
                                 },
                                 child: Text(
                                   'Sign Out',

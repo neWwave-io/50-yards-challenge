@@ -14,14 +14,15 @@ import 'widgets/sign_in_prompt.dart';
 
 /// Step 1 of 2: the account and where the family is.
 class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key, this.onNext, this.onSignIn});
+  const SignUpScreen({super.key, this.onSignIn, this.onCompleted});
 
-  static const routeName = 'SignUp2';
-  static const routePath = '/signUpV2';
+  static const routeName = 'SignUp';
+  static const routePath = '/signUp';
 
-  /// Overrides the default push to [SignUpChildrenScreen].
-  final VoidCallback? onNext;
   final VoidCallback? onSignIn;
+
+  /// Where to go once step 2 has created the account.
+  final VoidCallback? onCompleted;
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
@@ -37,14 +38,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void _next() {
-    final onNext = widget.onNext;
-    if (onNext != null) {
-      onNext();
-      return;
-    }
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => const SignUpChildrenScreen(),
+        builder: (_) => SignUpChildrenScreen(
+          account: _controller.toDraft(),
+          onCompleted: widget.onCompleted,
+        ),
       ),
     );
   }

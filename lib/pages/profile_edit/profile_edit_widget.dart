@@ -2331,7 +2331,7 @@ class _ProfileEditWidgetState extends State<ProfileEditWidget> {
                                                 .clearRedirectLocation();
 
                                             context.goNamedAuth(
-                                                SignUpWidget.routeName,
+                                                SignUpScreen.routeName,
                                                 context.mounted);
                                           },
                                         ),
@@ -2344,7 +2344,7 @@ class _ProfileEditWidgetState extends State<ProfileEditWidget> {
                                             .clearRedirectLocation();
 
                                         context.goNamedAuth(
-                                            SignUpWidget.routeName,
+                                            SignUpScreen.routeName,
                                             context.mounted);
                                       },
                                       text: 'Sign Out',

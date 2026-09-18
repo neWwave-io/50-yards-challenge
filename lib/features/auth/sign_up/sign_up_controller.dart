@@ -1,10 +1,12 @@
 import 'package:flutter/widgets.dart';
 
+import 'data/sign_up_draft.dart';
 import 'widgets/password_strength_meter.dart';
 
 /// Form state for step 1 of sign-up. It owns the text controllers and knows
-/// when the step is complete; it does not talk to a backend — that belongs in
-/// a repository once step 2 exists.
+/// when the step is complete; it never talks to a backend. Step 2 carries
+/// [toDraft] over to `SignUpRepository`, which creates the account once both
+/// halves are answered.
 class SignUpStepOneController extends ChangeNotifier {
   SignUpStepOneController() {
     for (final c in [fullName, email, password, confirmPassword]) {
@@ -56,6 +58,16 @@ class SignUpStepOneController extends ChangeNotifier {
       (_relationship?.isNotEmpty ?? false) &&
       (_city?.isNotEmpty ?? false) &&
       (_state?.isNotEmpty ?? false);
+
+  /// Only valid once [isComplete] is true.
+  SignUpDraft toDraft() => SignUpDraft(
+        fullName: fullName.text.trim(),
+        email: email.text.trim(),
+        password: password.text,
+        relationship: _relationship!,
+        city: _city!,
+        state: _state!,
+      );
 
   @override
   void dispose() {

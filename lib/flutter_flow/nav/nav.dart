@@ -17,7 +17,6 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/lat_lng.dart';
 import '/flutter_flow/place.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/features/auth/sign_up/sign_up_children_screen.dart';
 import '/features/auth/sign_up/sign_up_screen.dart';
 import 'serialization_util.dart';
 
@@ -87,19 +86,30 @@ class AppStateNotifier extends ChangeNotifier {
   }
 }
 
+/// The v2 sign-up, wired to the app's router. Step 2 is pushed by step 1 once
+/// it has the account details, so it has no route of its own.
+SignUpScreen _signUpScreen(BuildContext context) => SignUpScreen(
+      onSignIn: () => context.pushNamed(SigninWidget.routeName),
+      onCompleted: () =>
+          context.goNamedAuth(LoadingPageWidget.routeName, context.mounted),
+    );
+
 GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
       initialLocation: '/',
       debugLogDiagnostics: true,
       refreshListenable: appStateNotifier,
       navigatorKey: appNavigatorKey,
       errorBuilder: (context, state) =>
-          appStateNotifier.loggedIn ? LoadingPageWidget() : SignUpWidget(),
+          appStateNotifier.loggedIn
+              ? LoadingPageWidget()
+              : _signUpScreen(context),
       routes: [
         FFRoute(
           name: '_initialize',
           path: '/',
-          builder: (context, _) =>
-              appStateNotifier.loggedIn ? LoadingPageWidget() : SignUpWidget(),
+          builder: (context, _) => appStateNotifier.loggedIn
+              ? LoadingPageWidget()
+              : _signUpScreen(context),
         ),
         FFRoute(
           name: HomePageWidget.routeName,
@@ -112,21 +122,9 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => SigninWidget(),
         ),
         FFRoute(
-          name: SignUpWidget.routeName,
-          path: SignUpWidget.routePath,
-          builder: (context, params) => SignUpWidget(),
-        ),
-        FFRoute(
           name: SignUpScreen.routeName,
           path: SignUpScreen.routePath,
-          builder: (context, params) => SignUpScreen(
-            onSignIn: () => context.pushNamed(SigninWidget.routeName),
-          ),
-        ),
-        FFRoute(
-          name: SignUpChildrenScreen.routeName,
-          path: SignUpChildrenScreen.routePath,
-          builder: (context, params) => const SignUpChildrenScreen(),
+          builder: (context, params) => _signUpScreen(context),
         ),
         FFRoute(
           name: LeaderBoardWidget.routeName,

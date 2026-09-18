@@ -378,7 +378,7 @@ class _HomeAdminWidgetState extends State<HomeAdminWidget> {
                               GoRouter.of(context).clearRedirectLocation();
 
                               context.goNamedAuth(
-                                  SignUpWidget.routeName, context.mounted);
+                                  SignUpScreen.routeName, context.mounted);
                             },
                             child: Text(
                               'Sign Out',

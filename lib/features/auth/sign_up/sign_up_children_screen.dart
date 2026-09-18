@@ -5,25 +5,32 @@ import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/app_primary_button.dart';
 import '../../../core/widgets/app_step_progress.dart';
 import 'child.dart';
+import 'data/sign_up_draft.dart';
+import 'data/sign_up_repository.dart';
 import 'widgets/add_child_card.dart';
 import 'widgets/child_name_field.dart';
 import 'widgets/child_summary_card.dart';
 
-/// Step 2 of 2: who is doing the mowing.
+/// Step 2 of 2: who is doing the mowing. Submitting creates the account from
+/// [account] plus the children entered here.
 class SignUpChildrenScreen extends StatefulWidget {
   const SignUpChildrenScreen({
     super.key,
+    required this.account,
+    this.repository = const SignUpRepository(),
     this.onBack,
-    this.onSubmit,
+    this.onCompleted,
   });
 
   static const routeName = 'SignUpChildren';
-  static const routePath = '/signUpV2/children';
+  static const routePath = '/signUp/children';
 
+  final SignUpDraft account;
+  final SignUpRepository repository;
   final VoidCallback? onBack;
 
-  /// Called with every completed child once the form is valid.
-  final ValueChanged<List<Child>>? onSubmit;
+  /// Where to go once the account exists.
+  final VoidCallback? onCompleted;
 
   @override
   State<SignUpChildrenScreen> createState() => _SignUpChildrenScreenState();
@@ -37,10 +44,12 @@ class _SignUpChildrenScreenState extends State<SignUpChildrenScreen> {
   String? _editingId;
 
   var _nextId = 0;
+  var _submitting = false;
 
   bool get _canSubmit =>
       _children.isNotEmpty &&
       _editingId == null &&
+      !_submitting &&
       _children.every((c) => c.isComplete);
 
   void _add(String name) {
@@ -61,6 +70,32 @@ class _SignUpChildrenScreenState extends State<SignUpChildrenScreen> {
         _children.removeWhere((c) => c.id == id);
         if (_editingId == id) _editingId = null;
       });
+
+  Future<void> _submit() async {
+    setState(() => _submitting = true);
+    try {
+      await widget.repository.signUp(
+        account: widget.account,
+        children: List.unmodifiable(_children),
+      );
+      if (mounted) widget.onCompleted?.call();
+    } on SignUpFailure catch (e) {
+      _showError(e.message);
+    } catch (_) {
+      // A dropped connection or anything else unforeseen: the button must
+      // come back rather than sit there spinning.
+      _showError('Something went wrong. Please check your connection and '
+          'try again.');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,10 +147,8 @@ class _SignUpChildrenScreenState extends State<SignUpChildrenScreen> {
                             const Expanded(child: SizedBox.shrink()),
                             AppPrimaryButton(
                               label: 'Sign up',
-                              onPressed: _canSubmit
-                                  ? () => widget.onSubmit
-                                      ?.call(List.unmodifiable(_children))
-                                  : null,
+                              busy: _submitting,
+                              onPressed: _canSubmit ? _submit : null,
                             ),
                           ],
                         ),
