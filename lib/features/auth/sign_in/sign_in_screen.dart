@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_link_text.dart';
 import '../../../core/widgets/app_primary_button.dart';
+import '../../../core/widgets/app_scroll_page.dart';
 import '../../../core/widgets/app_text_field.dart';
 import 'sign_in_controller.dart';
 
@@ -82,50 +83,43 @@ class _SignInScreenState extends State<SignInScreen> {
           onTap: () => FocusScope.of(context).unfocus(),
           child: ListenableBuilder(
             listenable: _controller,
-            builder: (context, _) => LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.xl,
-                  AppSpacing.huge,
-                  AppSpacing.xl,
-                  72,
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight - AppSpacing.huge - 72,
+            builder: (context, _) => AppScrollPage(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.huge,
+                AppSpacing.xl,
+                72,
+              ),
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _header(),
+                  const SizedBox(height: AppSpacing.xxxl),
+                  _fields(),
+                ],
+              ),
+              footer: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppPrimaryButton(
+                    label: 'Sign In',
+                    busy: _submitting,
+                    onPressed:
+                        _controller.isComplete && !_submitting ? _submit : null,
                   ),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _header(),
-                        const SizedBox(height: AppSpacing.xxxl),
-                        _fields(),
-                        const SizedBox(height: AppSpacing.xxl),
-                        const Expanded(child: SizedBox.shrink()),
-                        AppPrimaryButton(
-                          label: 'Sign In',
-                          busy: _submitting,
-                          onPressed: _controller.isComplete && !_submitting
-                              ? _submit
-                              : null,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        AppLinkText(
-                          text: "Don't have an account yet?",
-                          linkText: 'Create Account',
-                          onTap: widget.onCreateAccount,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          'Having trouble logging in?',
-                          textAlign: TextAlign.center,
-                          style: AppTypography.footnote,
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppLinkText(
+                    text: "Don't have an account yet?",
+                    linkText: 'Create Account',
+                    onTap: widget.onCreateAccount,
                   ),
-                ),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    'Having trouble logging in?',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.footnote,
+                  ),
+                ],
               ),
             ),
           ),

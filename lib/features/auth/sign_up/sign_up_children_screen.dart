@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/app_primary_button.dart';
+import '../../../core/widgets/app_scroll_page.dart';
 import '../../../core/widgets/app_step_progress.dart';
 import 'child.dart';
 import 'data/sign_up_draft.dart';
@@ -111,49 +112,36 @@ class _SignUpChildrenScreenState extends State<SignUpChildrenScreen> {
                 onTap: widget.onBack ?? () => Navigator.of(context).maybePop(),
               ),
               Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) => SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.xl,
-                      AppSpacing.xxl,
-                      AppSpacing.xl,
-                      AppSpacing.huge,
-                    ),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight -
-                            AppSpacing.xxl -
-                            AppSpacing.huge,
+                child: AppScrollPage(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.xl,
+                    AppSpacing.xxl,
+                    AppSpacing.xl,
+                    AppSpacing.huge,
+                  ),
+                  body: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const AppStepProgress(step: 2, totalSteps: 2),
+                      const SizedBox(height: AppSpacing.xxl),
+                      Text(
+                        'Sign Up',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.displayLarge,
                       ),
-                      child: IntrinsicHeight(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const AppStepProgress(step: 2, totalSteps: 2),
-                            const SizedBox(height: AppSpacing.xxl),
-                            Text(
-                              'Sign Up',
-                              textAlign: TextAlign.center,
-                              style: AppTypography.displayLarge,
-                            ),
-                            const SizedBox(height: AppSpacing.xxxl),
-                            Text(
-                              'Child(ren) Information',
-                              style: AppTypography.titleMedium,
-                            ),
-                            const SizedBox(height: AppSpacing.lg),
-                            ..._cards(),
-                            const SizedBox(height: AppSpacing.xxl),
-                            const Expanded(child: SizedBox.shrink()),
-                            AppPrimaryButton(
-                              label: 'Sign up',
-                              busy: _submitting,
-                              onPressed: _canSubmit ? _submit : null,
-                            ),
-                          ],
-                        ),
+                      const SizedBox(height: AppSpacing.xxxl),
+                      Text(
+                        'Child(ren) Information',
+                        style: AppTypography.titleMedium,
                       ),
-                    ),
+                      const SizedBox(height: AppSpacing.lg),
+                      ..._cards(),
+                    ],
+                  ),
+                  footer: AppPrimaryButton(
+                    label: 'Sign up',
+                    busy: _submitting,
+                    onPressed: _canSubmit ? _submit : null,
                   ),
                 ),
               ),

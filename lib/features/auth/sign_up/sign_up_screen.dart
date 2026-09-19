@@ -5,6 +5,7 @@ import '../../../core/constants/us_states.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_link_text.dart';
 import '../../../core/widgets/app_primary_button.dart';
+import '../../../core/widgets/app_scroll_page.dart';
 import '../../../core/widgets/app_select_field.dart';
 import '../../../core/widgets/app_step_progress.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -58,44 +59,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
           onTap: () => FocusScope.of(context).unfocus(),
           child: ListenableBuilder(
             listenable: _controller,
-            builder: (context, _) => LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.xl,
-                  AppSpacing.xxl,
-                  AppSpacing.xl,
-                  AppSpacing.huge,
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight -
-                        AppSpacing.xxl -
-                        AppSpacing.huge,
+            builder: (context, _) => AppScrollPage(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.xxl,
+                AppSpacing.xl,
+                AppSpacing.huge,
+              ),
+              body: _Form(controller: _controller),
+              footer: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppPrimaryButton(
+                    label: 'Next',
+                    onPressed: _controller.isComplete ? _next : null,
                   ),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _Form(controller: _controller),
-                        // Keeps a gap when the form is taller than the
-                        // viewport, and pins the button to the bottom when it
-                        // is not.
-                        const SizedBox(height: AppSpacing.xxl),
-                        const Expanded(child: SizedBox.shrink()),
-                        AppPrimaryButton(
-                          label: 'Next',
-                          onPressed: _controller.isComplete ? _next : null,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        AppLinkText(
-                          text: 'Already have an account?',
-                          linkText: 'Sign In here',
-                          onTap: widget.onSignIn,
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: AppSpacing.xs),
+                  AppLinkText(
+                    text: 'Already have an account?',
+                    linkText: 'Sign In here',
+                    onTap: widget.onSignIn,
                   ),
-                ),
+                ],
               ),
             ),
           ),
