@@ -29,6 +29,22 @@ import 'package:simple_gradient_text/simple_gradient_text.dart';
 import 'home_page_model.dart';
 export 'home_page_model.dart';
 
+/// The blur hash this page already uses as its generic placeholder.
+const _fallbackBlurHash = r'LVCsUIt84ms=?dxbM_a$xvxbjbRi';
+
+/// A blur hash shorter than six characters cannot be decoded, and v2
+/// profiles have none yet.
+String _blurHashOrDefault(String hash) =>
+    hash.length >= 6 ? hash : _fallbackBlurHash;
+
+/// v2 profiles can have no photo. `NetworkImage('')` resolves to `file:///`
+/// and throws "No host specified in URI" on every rebuild, so show the
+/// placeholder instead.
+ImageProvider _avatarImage(String url, String blurHash) {
+  if (url.isEmpty) return BlurHashImage(_blurHashOrDefault(blurHash));
+  return NetworkImage(url);
+}
+
 class HomePageWidget extends StatefulWidget {
   const HomePageWidget({super.key});
 
@@ -471,19 +487,13 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                                                               SizedBox.expand(
                                                                         child:
                                                                             Image(
-                                                                          image: BlurHashImage(currentUserDocument!
-                                                                              .userProfile
-                                                                              .hashCodeImage),
+                                                                          image: BlurHashImage(_blurHashOrDefault(currentUserDocument!.userProfile.hashCodeImage)),
                                                                           fit: BoxFit
                                                                               .cover,
                                                                         ),
                                                                       ),
                                                                       image:
-                                                                          NetworkImage(
-                                                                        currentUserDocument!
-                                                                            .userProfile
-                                                                            .image,
-                                                                      ),
+                                                                          _avatarImage(currentUserDocument!.userProfile.image, currentUserDocument!.userProfile.hashCodeImage),
                                                                       width: double
                                                                           .infinity,
                                                                       height: double
@@ -752,17 +762,13 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                                                           child:
                                                                               Image(
                                                                             image:
-                                                                                BlurHashImage(highlightUsersRecord.userProfile.hashCodeImage),
+                                                                                BlurHashImage(_blurHashOrDefault(highlightUsersRecord.userProfile.hashCodeImage)),
                                                                             fit:
                                                                                 BoxFit.cover,
                                                                           ),
                                                                         ),
                                                                         image:
-                                                                            NetworkImage(
-                                                                          highlightUsersRecord
-                                                                              .userProfile
-                                                                              .image,
-                                                                        ),
+                                                                            _avatarImage(highlightUsersRecord.userProfile.image, highlightUsersRecord.userProfile.hashCodeImage),
                                                                         width: double
                                                                             .infinity,
                                                                         height:
@@ -999,11 +1005,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                                                     .cover,
                                                               ),
                                                             ),
-                                                            image: NetworkImage(
-                                                              currentUserDocument!
-                                                                  .userProfile
-                                                                  .image,
-                                                            ),
+                                                            image: _avatarImage(currentUserDocument!.userProfile.image, currentUserDocument!.userProfile.hashCodeImage),
                                                             width:
                                                                 double.infinity,
                                                             height:

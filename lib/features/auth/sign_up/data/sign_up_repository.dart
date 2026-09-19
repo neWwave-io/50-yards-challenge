@@ -33,8 +33,13 @@ class SignUpRepository {
     final user = await _createAccount(account);
 
     try {
-      await _writeProfile(user.id, account, children);
-      await _writeChildren(user.id, children);
+      // Uploaded first so the profile can carry a photo too (see below).
+      final photos = [
+        for (var i = 0; i < children.length; i++)
+          await _uploadPhoto(user.id, i, children[i]),
+      ];
+      await _writeProfile(user.id, account, children, photos);
+      await _writeChildren(user.id, children, photos);
     } on PostgrestException catch (e) {
       throw SignUpFailure(
         'Your account was created but we could not save your details: '
@@ -97,6 +102,7 @@ class SignUpRepository {
     String profileId,
     SignUpDraft account,
     List<Child> children,
+    List<String?> photos,
   ) async {
     final first = children.firstOrNull;
 
@@ -112,11 +118,19 @@ class SignUpRepository {
       // read them from here.
       'child_name': first?.name,
       'gender': first?.gender?.value,
+      // v1 took one photo at sign-up and every screen shows it as the
+      // account's avatar; v2 takes one per child. The first child who has one
+      // stands in, so the v1 screens have an image to show.
+      'photo_url': photos.whereType<String>().firstOrNull,
       // updated_at is maintained by the profiles_set_updated_at trigger.
     }).eq('id', profileId);
   }
 
-  Future<void> _writeChildren(String profileId, List<Child> children) async {
+  Future<void> _writeChildren(
+    String profileId,
+    List<Child> children,
+    List<String?> photos,
+  ) async {
     // The screen holds the complete list, so replace rather than append —
     // that keeps a second run after a half-finished sign-up from doubling
     // everyone up.
@@ -132,7 +146,7 @@ class SignUpRepository {
         'shirt_size': child.shirtSize,
         'gender': child.gender?.value,
         'date_of_birth': _asDate(child.dateOfBirth),
-        'photo_url': await _uploadPhoto(profileId, i, child),
+        'photo_url': photos[i],
       });
     }
 
