@@ -160,6 +160,14 @@ class _Form extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           PasswordStrengthMeter(strength: controller.passwordStrength),
         ],
+        // Without this, Next just stays grey and nothing says why.
+        if (controller.showPasswordMismatch) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            "Passwords don't match",
+            style: AppTypography.caption.copyWith(color: AppColors.danger),
+          ),
+        ],
         const SizedBox(height: AppSpacing.xxxl),
         AppSelectField(
           label: 'Relationship',

@@ -50,6 +50,11 @@ class SignUpStepOneController extends ChangeNotifier {
 
   PasswordStrength get passwordStrength => PasswordStrength.of(password.text);
 
+  /// Only once the second box has something in it — an empty confirm field
+  /// is unfinished, not wrong.
+  bool get showPasswordMismatch =>
+      confirmPassword.text.isNotEmpty && !passwordsMatch;
+
   bool get passwordsMatch =>
       password.text.isNotEmpty && password.text == confirmPassword.text;
 

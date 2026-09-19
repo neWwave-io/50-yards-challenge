@@ -151,4 +151,24 @@ void main() {
     expect(await cityOffers('Fresno'), isTrue);
     expect(await cityOffers('Milwaukee'), isFalse);
   });
+
+  testWidgets('a mismatched confirm password says so', (tester) async {
+    await pumpScreen(tester);
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Password'), 'Mow50Lawns');
+    await tester.pumpAndSettle();
+    // Nothing in the confirm box yet: unfinished, not wrong.
+    expect(find.text("Passwords don't match"), findsNothing);
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Confirm Password'), 'Mow50Lawns!');
+    await tester.pumpAndSettle();
+    expect(find.text("Passwords don't match"), findsOneWidget);
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Mow50Lawns!'), 'Mow50Lawns');
+    await tester.pumpAndSettle();
+    expect(find.text("Passwords don't match"), findsNothing);
+  });
 }
