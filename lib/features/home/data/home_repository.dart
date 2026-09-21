@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../core/supabase/supabase_config.dart';
 import 'home_data.dart';
 
@@ -25,12 +27,15 @@ class HomeRepository {
       throw const HomeFailure('You are signed out.');
     }
 
+    // Only the profile is essential. The rest of the page is worth showing
+    // even if one section cannot be read, so those fall back to empty and
+    // say why on the console rather than replacing the page with an error.
     final results = await Future.wait([
       _profile(profileId),
-      _streak(profileId),
-      _lawns(profileId),
-      _announcements(),
-      _activity(),
+      _optional('day streak', () => _streak(profileId), const DayStreak.none()),
+      _optional('lawns', () => _lawns(profileId), const <_LawnRow>[]),
+      _optional('announcements', _announcements, const <Announcement>[]),
+      _optional('activity feed', _activity, const <ActivityEntry>[]),
     ]);
 
     final profile = results[0] as HomeProfile;
@@ -50,6 +55,20 @@ class HomeRepository {
           announcements.where((a) => a.videoLink != null).firstOrNull,
       activity: activity,
     );
+  }
+
+  /// Runs [read], falling back to [fallback] if it fails.
+  static Future<T> _optional<T>(
+    String what,
+    Future<T> Function() read,
+    T fallback,
+  ) async {
+    try {
+      return await read();
+    } catch (e) {
+      debugPrint('Home: could not load $what — $e');
+      return fallback;
+    }
   }
 
   Future<HomeProfile> _profile(String profileId) async {
@@ -145,7 +164,10 @@ class HomeRepository {
   Future<List<ActivityEntry>> _activity() async {
     final rows = await supabase
         .from('lawns')
-        .select('who_for, created_at, profiles(display_name)')
+        // `lawns` points at `profiles` twice — once for who mowed and once
+        // for the admin who approved it — so the constraint has to be named
+        // or PostgREST cannot tell which one is meant.
+        .select('who_for, created_at, profiles!lawns_profile_id_fkey(display_name)')
         .eq('status', 'approved')
         .order('created_at', ascending: false)
         .limit(2);
