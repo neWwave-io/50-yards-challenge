@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:the_50_yard_challenge/features/home/data/home_data.dart';
 import 'package:the_50_yard_challenge/features/home/data/home_repository.dart';
 import 'package:the_50_yard_challenge/features/home/home_screen.dart';
+import 'package:the_50_yard_challenge/features/home/widgets/challenge_progress_card.dart';
 
 /// Serves a fixed page, so the screen can be exercised without Supabase.
 class FakeHomeRepository implements HomeRepository {
@@ -207,4 +208,30 @@ void main() {
 
     expect(find.text('No badge yet'), findsOneWidget);
   });
+
+  // A status bar taller than the design's pushed the greeting down into the
+  // challenge card, which then covered it.
+  for (final statusBar in const [24.0, 48.0, 59.0]) {
+    testWidgets('the greeting clears the card with a ${statusBar}px status bar',
+        (tester) async {
+      tester.view.physicalSize = const Size(393, 852);
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.padding = FakeViewPadding(top: statusBar);
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        MaterialApp(home: HomeScreen(repository: FakeHomeRepository(buildData()))),
+      );
+      await tester.pumpAndSettle();
+
+      final greeting = tester.getRect(find.text('Hi, Marcus'));
+      final joined = tester.getRect(find.text('Available Since 10th Aug'));
+      final card = tester.getRect(find.byType(ChallengeProgressCard));
+
+      expect(greeting.bottom, lessThanOrEqualTo(card.top),
+          reason: 'the greeting is under the card');
+      expect(joined.bottom, lessThanOrEqualTo(card.top),
+          reason: 'the join date is under the card');
+    });
+  }
 }

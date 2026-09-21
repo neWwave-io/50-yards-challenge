@@ -18,6 +18,13 @@ class HomeHeader extends StatelessWidget {
 
   static const height = 263.0;
 
+  /// The avatar-and-greeting row. The design gives it 82px, starting just
+  /// under the status bar, which leaves the rest of the banner for the card.
+  static const contentHeight = 82.0;
+
+  /// Where the challenge card starts, measured from the top of the banner.
+  static const cardTop = 159.0;
+
   @override
   Widget build(BuildContext context) {
     final joined = profile.joinedAt;
@@ -40,42 +47,55 @@ class HomeHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
       child: SafeArea(
         bottom: false,
-        child: Row(
-          children: [
-            _Avatar(photoUrl: profile.photoUrl),
-            const SizedBox(width: AppSpacing.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+        // Pinned just below the status bar rather than centred in the banner:
+        // the banner's lower half is covered by the challenge card, and a
+        // centred row would sit underneath it.
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: SizedBox(
+              height: contentHeight,
+              child: Row(
                 children: [
-                  _TeamLine(state: profile.state),
-                  Text(
-                    'Hi, ${profile.firstName}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.greeting,
-                  ),
-                  if (joined != null)
-                    Text(
-                      'Available Since ${dayAndMonth(joined)}',
-                      style: AppTypography.caption
-                          .copyWith(color: AppColors.surface),
+                  _Avatar(photoUrl: profile.photoUrl),
+                  const SizedBox(width: AppSpacing.lg),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _TeamLine(state: profile.state),
+                        Text(
+                          'Hi, ${profile.firstName}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.greeting,
+                        ),
+                        if (joined != null)
+                          Text(
+                            'Available Since ${dayAndMonth(joined)}',
+                            style: AppTypography.caption
+                                .copyWith(color: AppColors.surface),
+                          ),
+                      ],
                     ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onStatusTap,
+                    child: SvgPicture.asset(
+                      'assets/icons/home_status.svg',
+                      width: 44,
+                      height: 44,
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onStatusTap,
-              child: SvgPicture.asset(
-                'assets/icons/home_status.svg',
-                width: 44,
-                height: 44,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

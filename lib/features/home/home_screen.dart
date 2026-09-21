@@ -126,12 +126,22 @@ class _Content extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // The card overlaps the header's lower edge.
+          // The card overlaps the header's lower edge. Its top follows the
+          // greeting rather than a fixed offset, so a taller status bar
+          // pushes both down together instead of the card climbing over the
+          // text.
           Stack(
             children: [
               HomeHeader(profile: data.profile),
               Padding(
-                padding: const EdgeInsets.only(top: 159, left: 20, right: 20),
+                padding: EdgeInsets.only(
+                  top: MediaQuery.paddingOf(context).top +
+                      4 +
+                      HomeHeader.contentHeight +
+                      14,
+                  left: 20,
+                  right: 20,
+                ),
                 child: ChallengeProgressCard(
                   profile: data.profile,
                   streak: data.streak,
