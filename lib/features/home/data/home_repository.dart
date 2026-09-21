@@ -36,7 +36,7 @@ class HomeRepository {
       _optional('lawns', () => _lawns(profileId), const <_LawnRow>[]),
       _optional('announcements', _announcements, const <Announcement>[]),
       _optional('activity feed', _activity, const <ActivityEntry>[]),
-      _optional('training videos', _training, null),
+      _optional('training videos', _training, const <TrainingVideo>[]),
     ]);
 
     final profile = results[0] as HomeProfile;
@@ -44,7 +44,7 @@ class HomeRepository {
     final lawns = results[2] as List<_LawnRow>;
     final announcements = results[3] as List<Announcement>;
     final activity = results[4] as List<ActivityEntry>;
-    final training = results[5] as TrainingVideo?;
+    final training = results[5] as List<TrainingVideo>;
 
     return HomeData(
       profile: profile,
@@ -161,23 +161,24 @@ class HomeRepository {
     ];
   }
 
-  Future<TrainingVideo?> _training() async {
-    final row = await supabase
+  Future<List<TrainingVideo>> _training() async {
+    final rows = await supabase
         .from('training_videos')
         .select('id, title, description, video_url, thumbnail_url')
         .eq('is_published', true)
         .order('sort_order')
-        .limit(1)
-        .maybeSingle();
+        .limit(10);
 
-    if (row == null) return null;
-    return TrainingVideo(
-      id: row['id'] as String,
-      title: (row['title'] as String?) ?? '',
-      description: (row['description'] as String?)?.nullIfEmpty,
-      videoUrl: (row['video_url'] as String?) ?? '',
-      thumbnailUrl: (row['thumbnail_url'] as String?)?.trim().nullIfEmpty,
-    );
+    return [
+      for (final row in rows as List)
+        TrainingVideo(
+          id: row['id'] as String,
+          title: (row['title'] as String?) ?? '',
+          description: (row['description'] as String?)?.nullIfEmpty,
+          videoUrl: (row['video_url'] as String?) ?? '',
+          thumbnailUrl: (row['thumbnail_url'] as String?)?.trim().nullIfEmpty,
+        ),
+    ];
   }
 
   Future<List<ActivityEntry>> _activity() async {

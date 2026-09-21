@@ -13,7 +13,7 @@ import 'widgets/home_section.dart';
 import 'widgets/mowed_for_grid.dart';
 import 'widgets/passport_card.dart';
 import 'widgets/requested_lawn_card.dart';
-import 'widgets/training_hub_card.dart';
+import 'widgets/training_hub_carousel.dart';
 
 /// The home page.
 ///
@@ -67,6 +67,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.olive50,
+      // The Scaffold lays the body out above the bar, so the last card can
+      // never end up underneath it.
+      bottomNavigationBar: widget.bottomBar,
       body: ListenableBuilder(
         listenable: _controller,
         builder: (context, _) {
@@ -84,23 +87,14 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
 
-          return Stack(
-            children: [
-              RefreshIndicator(
-                color: AppColors.olive500,
-                onRefresh: _controller.load,
-                child: _Content(
-                  data: data,
-                  controller: _controller,
-                  screen: widget,
-                ),
-              ),
-              if (widget.bottomBar != null)
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: widget.bottomBar,
-                ),
-            ],
+          return RefreshIndicator(
+            color: AppColors.olive500,
+            onRefresh: _controller.load,
+            child: _Content(
+              data: data,
+              controller: _controller,
+              screen: widget,
+            ),
           );
         },
       ),
@@ -214,17 +208,16 @@ class _Content extends StatelessWidget {
                   title: 'Training Hub',
                   subtitle: 'Stay up to date on how to safely and properly '
                       'complete your lawn services.',
-                  child: data.training == null
+                  child: data.training.isEmpty
                       ? const HomeSectionEmpty(
                           message: 'No training videos yet.',
                         )
-                      : TrainingHubCard(
-                          video: data.training!,
+                      : TrainingHubCarousel(
+                          videos: data.training,
                           onWatch: screen.onWatchTraining,
                         ),
                 ),
-                // Room for the tab bar.
-                SizedBox(height: screen.bottomBar == null ? AppSpacing.huge : 110),
+                const SizedBox(height: AppSpacing.huge),
               ],
             ),
           ),

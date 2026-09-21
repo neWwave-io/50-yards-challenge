@@ -7,7 +7,7 @@ class HomeData {
     required this.categories,
     required this.announcements,
     required this.activity,
-    this.training,
+    this.training = const [],
   });
 
   final HomeProfile profile;
@@ -20,8 +20,8 @@ class HomeData {
   final List<Announcement> announcements;
   final List<ActivityEntry> activity;
 
-  /// The first published training video, if there is one.
-  final TrainingVideo? training;
+  /// Published training videos, in the order the Training Hub shows them.
+  final List<TrainingVideo> training;
 }
 
 class HomeProfile {

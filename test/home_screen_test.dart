@@ -4,6 +4,7 @@ import 'package:the_50_yard_challenge/features/home/data/home_data.dart';
 import 'package:the_50_yard_challenge/features/home/data/home_repository.dart';
 import 'package:the_50_yard_challenge/features/home/home_screen.dart';
 import 'package:the_50_yard_challenge/features/home/widgets/challenge_progress_card.dart';
+import 'package:the_50_yard_challenge/features/home/widgets/training_hub_card.dart';
 
 /// Serves a fixed page, so the screen can be exercised without Supabase.
 class FakeHomeRepository implements HomeRepository {
@@ -28,7 +29,7 @@ HomeData buildData({
   List<CategoryTally>? categories,
   List<Announcement> announcements = const [],
   List<ActivityEntry> activity = const [],
-  TrainingVideo? training,
+  List<TrainingVideo> training = const [],
 }) =>
     HomeData(
       profile: HomeProfile(
@@ -133,11 +134,13 @@ void main() {
             at: DateTime.now().subtract(const Duration(days: 20)),
           ),
         ],
-        training: const TrainingVideo(
-          id: 'v',
-          title: 'Lawn Mower Maintenance',
-          videoUrl: 'https://example.com/v',
-        ),
+        training: const [
+          TrainingVideo(
+            id: 'v',
+            title: 'Lawn Mower Maintenance',
+            videoUrl: 'https://example.com/v',
+          ),
+        ],
       ),
     );
 
@@ -233,4 +236,76 @@ void main() {
           reason: 'the join date is under the card');
     });
   }
+
+  testWidgets('the training hub swipes between videos', (tester) async {
+    await pumpHome(
+      tester,
+      buildData(training: const [
+        TrainingVideo(
+            id: 'a', title: 'How to Submit Lawns', videoUrl: 'https://e/1'),
+        TrainingVideo(id: 'b', title: 'Safety First', videoUrl: 'https://e/2'),
+      ]),
+    );
+
+    // The page and the carousel are both scrollable, so name the page's.
+    await tester.scrollUntilVisible(
+      find.text('Training Hub'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('How to Submit Lawns'), findsOneWidget);
+    expect(find.text('Safety First'), findsNothing);
+
+    await tester.drag(find.byType(PageView), const Offset(-400, 0));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Safety First'), findsOneWidget);
+  });
+
+  testWidgets('a single video needs no carousel', (tester) async {
+    await pumpHome(
+      tester,
+      buildData(training: const [
+        TrainingVideo(id: 'a', title: 'Safety First', videoUrl: 'https://e/1'),
+      ]),
+    );
+
+    expect(find.byType(PageView), findsNothing);
+    expect(find.text('Safety First'), findsOneWidget);
+  });
+
+  // The tab bar used to float over the scroll view and cover the last card.
+  // The overlap only shows at the very bottom of the page, so scroll right
+  // to the end rather than just until the button appears.
+  testWidgets('the tab bar sits below the content, not over it',
+      (tester) async {
+    tester.view.physicalSize = const Size(393, 852);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeScreen(
+          repository: FakeHomeRepository(buildData(training: const [
+            TrainingVideo(
+                id: 'a', title: 'Safety First', videoUrl: 'https://e/1'),
+          ])),
+          // The real bar is ~122px of chrome plus the home-indicator inset.
+          bottomBar: const SizedBox(height: 156, child: Text('tabs')),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final page = tester.state<ScrollableState>(find.byType(Scrollable).first);
+    page.position.jumpTo(page.position.maxScrollExtent);
+    await tester.pumpAndSettle();
+
+    // The whole card has to clear the bar, not just the button inside it.
+    final card = tester.getRect(find.byType(TrainingHubCard));
+    final bar = tester.getRect(find.text('tabs'));
+
+    expect(card.bottom, lessThanOrEqualTo(bar.top),
+        reason: 'the tab bar is covering the card');
+  });
 }
