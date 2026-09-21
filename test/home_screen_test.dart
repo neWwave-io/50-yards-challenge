@@ -21,6 +21,8 @@ class FakeHomeRepository implements HomeRepository {
 HomeData buildData({
   int lawns = 3,
   double hours = 24,
+  String? badgeName = 'Starter',
+  int? badgeRank = 3,
   DayStreak streak = const DayStreak(current: 1, longest: 2),
   List<CategoryTally>? categories,
   List<Announcement> announcements = const [],
@@ -34,8 +36,8 @@ HomeData buildData({
         joinedAt: DateTime(2025, 8, 10),
         totalLawns: lawns,
         totalHours: hours,
-        badgeName: 'Starter',
-        badgeRank: 3,
+        badgeName: badgeName,
+        badgeRank: badgeRank,
       ),
       streak: streak,
       week: const MowingWeek(days: [
@@ -74,7 +76,8 @@ void main() {
     expect(find.text('Team Alabama'), findsOneWidget);
     expect(find.text('Available Since 10th Aug'), findsOneWidget);
 
-    expect(find.text('3'), findsWidgets); // lawns on the ring
+    // Lawns show twice: on the ring and above the level name.
+    expect(find.text('3'), findsNWidgets(2));
     expect(find.text('of 50'), findsOneWidget);
     expect(find.text('Starter'), findsOneWidget);
     expect(find.text('24'), findsOneWidget); // hours
@@ -187,5 +190,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(knobSide(), Alignment.centerRight);
+  });
+
+  testWidgets('a finished challenge says completed instead of counting',
+      (tester) async {
+    await pumpHome(tester, buildData(lawns: 50));
+
+    expect(find.text('completed'), findsOneWidget);
+    expect(find.text('of 50'), findsNothing);
+    expect(find.text('50'), findsNWidgets(2));
+  });
+
+  testWidgets('an unranked family is told so rather than shown a made-up rank',
+      (tester) async {
+    await pumpHome(tester, buildData(badgeName: null, badgeRank: null));
+
+    expect(find.text('No badge yet'), findsOneWidget);
   });
 }

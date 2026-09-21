@@ -110,6 +110,21 @@ abstract final class AppColors {
   /// The pulsing dot on the requested-lawn card.
   static const requestPulse = Color(0xFF42A645);
 
+  /// The wash behind the challenge card, one per badge level in order.
+  ///
+  /// Each is the average colour of that level's shirt photo in the design,
+  /// which the card blurs out to a tint. Laid over white at [badgeGlowOpacity]
+  /// they read as the peach / green / violet / red / grey of the mock-ups.
+  static const badgeGlows = [
+    Color(0xFF6C290F),
+    Color(0xFF0D3711),
+    Color(0xFF1C0F6C),
+    Color(0xFF5C1B1B),
+    Color(0xFF141510),
+  ];
+
+  static const badgeGlowOpacity = 0.16;
+
   /// The home header's radial wash, lightest at the top left.
   static const headerWash = [olive500, olive700, olive800, olive900];
 

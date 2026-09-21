@@ -56,6 +56,13 @@ class HomeProfile {
 
   double get progress => (totalLawns / goal).clamp(0, 1).toDouble();
 
+  /// Fifty lawns in: the ring says "completed" rather than counting.
+  bool get isComplete => totalLawns >= goal;
+
+  /// Zero-based position in the badge ladder, for picking the card's wash.
+  /// Null until the levels are imported.
+  int? get badgeIndex => badgeRank == null ? null : badgeRank! - 1;
+
   int get nextLawnNumber => totalLawns + 1;
 
   /// The greeting uses the first word, so "Chris Baker" becomes "Chris".

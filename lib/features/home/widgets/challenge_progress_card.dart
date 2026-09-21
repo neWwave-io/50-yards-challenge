@@ -37,10 +37,10 @@ class ChallengeProgressCard extends StatelessWidget {
           height: 314,
           child: Stack(
             children: [
-              const Positioned(
+              Positioned(
                 right: -60,
                 bottom: -104,
-                child: _Glow(),
+                child: _Glow(level: profile.badgeIndex),
               ),
               Positioned(
                 left: -172,
@@ -54,7 +54,7 @@ class ChallengeProgressCard extends StatelessWidget {
               Positioned(
                 left: -172 + _ringDiameter / 2 + 70 - 60,
                 top: -15 + _ringDiameter / 2 - 50,
-                child: _RingLabel(lawns: profile.totalLawns),
+                child: _RingLabel(profile: profile),
               ),
               Positioned(
                 right: AppSpacing.lg,
@@ -74,46 +74,77 @@ class ChallengeProgressCard extends StatelessWidget {
   }
 }
 
+/// The wash in the corner, tinted by how far along the challenge is.
+///
+/// In the design this is the level's shirt photo, blurred until only its
+/// colour is left — so it is painted rather than shipped as five more images.
 class _Glow extends StatelessWidget {
-  const _Glow();
+  const _Glow({required this.level});
+
+  /// Zero-based badge level, or null before any level is reached.
+  final int? level;
 
   @override
-  Widget build(BuildContext context) => IgnorePointer(
-        child: Opacity(
-          opacity: 0.7,
-          child: Image.asset(
-            'assets/images/home/progress_glow.png',
-            width: 207,
-            height: 242,
-            fit: BoxFit.cover,
+  Widget build(BuildContext context) {
+    final index = level;
+    final tint = index == null
+        ? AppColors.moss500
+        : AppColors.badgeGlows[index.clamp(0, AppColors.badgeGlows.length - 1)];
+
+    return IgnorePointer(
+      child: Container(
+        width: 207,
+        height: 242,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              tint.withValues(alpha: AppColors.badgeGlowOpacity),
+              tint.withValues(alpha: 0),
+            ],
           ),
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _RingLabel extends StatelessWidget {
-  const _RingLabel({required this.lawns});
+  const _RingLabel({required this.profile});
 
-  final int lawns;
+  final HomeProfile profile;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-        width: 120,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('$lawns', style: AppTypography.ringNumber),
-            Text(
-              'of ${HomeProfile.goal}',
-              style: AppTypography.bodyMedium.copyWith(
-                fontSize: 16,
-                color: AppColors.moss500,
-                height: 1.4,
-              ),
+  Widget build(BuildContext context) {
+    final done = profile.isComplete;
+
+    return SizedBox(
+      width: 120,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${profile.totalLawns}',
+            style: done
+                ? AppTypography.ringNumber.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.olive700,
+                  )
+                : AppTypography.ringNumber,
+          ),
+          Text(
+            // Fifty lawns is the whole challenge: stop counting, celebrate.
+            done ? 'completed' : 'of ${HomeProfile.goal}',
+            style: AppTypography.bodyMedium.copyWith(
+              fontSize: 16,
+              color: done ? AppColors.olive700 : AppColors.moss500,
+              height: 1.4,
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Level extends StatelessWidget {
@@ -123,9 +154,6 @@ class _Level extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rank = profile.badgeRank;
-    final name = profile.badgeName;
-
     return SizedBox(
       width: 151,
       child: Column(
@@ -138,14 +166,13 @@ class _Level extends StatelessWidget {
             style: AppTypography.cardTitle.copyWith(color: AppColors.olive700),
           ),
           const SizedBox(height: AppSpacing.md),
-          // The badge ladder is empty until the levels are imported, so say
-          // so rather than inventing a rank.
-          if (rank != null)
-            Text('$rank', style: AppTypography.levelNumber)
-          else
-            Text('—', style: AppTypography.levelNumber),
+          // Lawns again, not the level's rank: every card in the design shows
+          // the same number here as on the ring.
+          Text('${profile.totalLawns}', style: AppTypography.levelNumber),
           Text(
-            name ?? 'No badge yet',
+            // The ladder is empty until the levels are imported, so say that
+            // rather than invent a title.
+            profile.badgeName ?? 'No badge yet',
             textAlign: TextAlign.right,
             style: AppTypography.bodyMedium.copyWith(
               color: AppColors.olive700,
