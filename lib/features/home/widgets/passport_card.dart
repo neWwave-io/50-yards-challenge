@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -34,12 +35,18 @@ class PassportCard extends StatelessWidget {
             top: -1,
             bottom: -1,
             child: IgnorePointer(
-              child: Opacity(
-                opacity: 0.4,
-                child: Image.asset(
-                  'assets/images/home/passport_glow.png',
-                  width: 99,
-                  fit: BoxFit.cover,
+              // Blurred until it reads as a wash of colour rather than a
+              // picture — the design blurs this layer and lays a second
+              // blur over it.
+              child: ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Opacity(
+                  opacity: 0.4,
+                  child: Image.asset(
+                    'assets/images/home/passport_glow.png',
+                    width: 99,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
