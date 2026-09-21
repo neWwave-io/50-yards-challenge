@@ -114,13 +114,17 @@ class _CountBadge extends StatelessWidget {
   /// From the centre of the tile.
   final Offset offset;
 
+  static const _height = 18.0;
+
   @override
   Widget build(BuildContext context) => Transform.translate(
         offset: offset,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
-          alignment: Alignment.center,
+          // Fixed height and a Row that hugs its child. A Container given an
+          // `alignment` expands to whatever bounded space it is offered — in
+          // a Stack, that is the entire tile.
+          height: _height,
+          padding: const EdgeInsets.symmetric(horizontal: 5),
           decoration: BoxDecoration(
             color: AppColors.olive600,
             borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -132,14 +136,18 @@ class _CountBadge extends StatelessWidget {
               ),
             ],
           ),
-          child: Text(
-            '$count',
-            textAlign: TextAlign.center,
-            style: AppTypography.caption.copyWith(
-              fontSize: 9,
-              color: AppColors.surface,
-              height: 1,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$count',
+                style: AppTypography.caption.copyWith(
+                  fontSize: 10,
+                  color: AppColors.surface,
+                  height: 1,
+                ),
+              ),
+            ],
           ),
         ),
       );
