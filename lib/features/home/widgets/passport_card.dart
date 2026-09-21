@@ -27,32 +27,52 @@ class PassportCard extends StatelessWidget {
         colors: [Color(0x80EEF4E3), Color(0x80D4E4B8), Color(0x80B8CF96)],
         stops: [0, 0.6, 1],
       ),
-      child: Row(
+      child: Stack(
         children: [
-          _HoursRing(hours: totalHours),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Passport',
-                  style: AppTypography.bodySmall.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.neutralText900,
-                  ),
+          Positioned(
+            left: -1,
+            top: -1,
+            bottom: -1,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.4,
+                child: Image.asset(
+                  'assets/images/home/passport_glow.png',
+                  width: 99,
+                  fit: BoxFit.cover,
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Hours, lawns and neighbors helped, all timestamped.',
-                  style: AppTypography.caption
-                      .copyWith(color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppPrimaryButton(label: 'Start Mowing', onPressed: onOpen),
-              ],
+              ),
             ),
+          ),
+          Row(
+            children: [
+              _HoursRing(hours: totalHours),
+              const SizedBox(width: AppSpacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Passport',
+                      style: AppTypography.bodySmall.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.neutralText900,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      // Title case, as the design sets it.
+                      'Hours, Lawns And Neighbors Helped, All Timestamped.',
+                      style: AppTypography.caption
+                          .copyWith(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    AppPrimaryButton(label: 'Start Mowing', onPressed: onOpen),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -76,25 +96,14 @@ class _HoursRing extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Opacity(
-                opacity: 0.4,
-                child: Image.asset(
-                  'assets/images/home/passport_glow.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
           AppProgressRing(
             diameter: 120,
             thickness: 10,
             progress: hours / PassportCard.goalHours,
             trackColor: AppColors.olive900,
             trackOpacity: 0.08,
-            // The design leaves the ring open on the right.
-            startAngle: math.pi * 0.85,
+            // The design leaves a gap at the bottom of the ring.
+            startAngle: math.pi * 0.65,
             sweep: math.pi * 1.7,
           ),
           Container(
