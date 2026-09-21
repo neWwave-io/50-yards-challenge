@@ -20,8 +20,8 @@ class HomeData {
   final List<Announcement> announcements;
   final List<ActivityEntry> activity;
 
-  /// The newest video announcement, if there is one.
-  final Announcement? training;
+  /// The first published training video, if there is one.
+  final TrainingVideo? training;
 }
 
 class HomeProfile {
@@ -178,6 +178,23 @@ class Announcement {
 
   /// Whichever link the card should open.
   String? get link => videoLink ?? articleLink;
+}
+
+/// A video in the Training Hub.
+class TrainingVideo {
+  const TrainingVideo({
+    required this.id,
+    required this.title,
+    required this.videoUrl,
+    this.description,
+    this.thumbnailUrl,
+  });
+
+  final String id;
+  final String title;
+  final String videoUrl;
+  final String? description;
+  final String? thumbnailUrl;
 }
 
 /// A lawn somebody in the community finished.

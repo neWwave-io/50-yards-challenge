@@ -140,7 +140,7 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
             onOpenAnnouncement: (_) =>
                 context.pushNamed(AnnouncementWidget.routeName),
             onOpenBadges: () => context.pushNamed(AchivementWidget.routeName),
-            onWatchTraining: (video) => _openLink(context, video.link),
+            onWatchTraining: (video) => _openLink(context, video.videoUrl),
             bottomBar: NavWidget(pageIndex: 0),
           ),
         ),

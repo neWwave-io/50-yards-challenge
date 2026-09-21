@@ -9,12 +9,12 @@ import '../data/home_data.dart';
 class TrainingHubCard extends StatelessWidget {
   const TrainingHubCard({super.key, required this.video, this.onWatch});
 
-  final Announcement video;
-  final ValueChanged<Announcement>? onWatch;
+  final TrainingVideo video;
+  final ValueChanged<TrainingVideo>? onWatch;
 
   @override
   Widget build(BuildContext context) {
-    final image = video.imageUrl;
+    final image = video.thumbnailUrl;
 
     return AppCard(
       child: Column(

@@ -39,7 +39,7 @@ class HomeScreen extends StatefulWidget {
   final VoidCallback? onSeeAnnouncements;
   final ValueChanged<Announcement>? onOpenAnnouncement;
   final VoidCallback? onOpenBadges;
-  final ValueChanged<Announcement>? onWatchTraining;
+  final ValueChanged<TrainingVideo>? onWatchTraining;
 
   /// The app's tab bar, pinned to the bottom.
   final Widget? bottomBar;

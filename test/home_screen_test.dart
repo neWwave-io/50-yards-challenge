@@ -28,7 +28,7 @@ HomeData buildData({
   List<CategoryTally>? categories,
   List<Announcement> announcements = const [],
   List<ActivityEntry> activity = const [],
-  Announcement? training,
+  TrainingVideo? training,
 }) =>
     HomeData(
       profile: HomeProfile(
@@ -133,11 +133,10 @@ void main() {
             at: DateTime.now().subtract(const Duration(days: 20)),
           ),
         ],
-        training: Announcement(
+        training: const TrainingVideo(
           id: 'v',
           title: 'Lawn Mower Maintenance',
-          videoLink: 'https://example.com/v',
-          createdAt: DateTime(2025, 8, 1),
+          videoUrl: 'https://example.com/v',
         ),
       ),
     );

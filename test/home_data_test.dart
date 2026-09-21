@@ -69,4 +69,19 @@ void main() {
       expect(week.mowedCount, 4);
     });
   });
+
+  group('TrainingVideo', () {
+    test('keeps the url it will open and the still it shows', () {
+      const video = TrainingVideo(
+        id: 'v',
+        title: 'Safety First',
+        videoUrl: 'https://www.youtube.com/watch?v=d5gcToZFDmk',
+        thumbnailUrl: 'https://img.youtube.com/vi/d5gcToZFDmk/hqdefault.jpg',
+      );
+
+      expect(video.videoUrl, contains('youtube.com'));
+      expect(video.thumbnailUrl, contains('d5gcToZFDmk'));
+      expect(video.description, isNull);
+    });
+  });
 }
