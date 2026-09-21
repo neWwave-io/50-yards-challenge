@@ -114,17 +114,24 @@ class _CountBadge extends StatelessWidget {
   /// From the centre of the tile.
   final Offset offset;
 
-  static const _height = 18.0;
+  static const _size = 18.0;
 
   @override
   Widget build(BuildContext context) => Transform.translate(
         offset: offset,
         child: Container(
-          // Fixed height and a Row that hugs its child. A Container given an
-          // `alignment` expands to whatever bounded space it is offered — in
-          // a Stack, that is the entire tile.
-          height: _height,
-          padding: const EdgeInsets.symmetric(horizontal: 5),
+          // Fixed height, and at least as wide, so a narrow digit like 1
+          // still draws a circle rather than an upright oval. Two digits let
+          // it grow sideways into a pill.
+          //
+          // Sized this way rather than with an `alignment`: a Container given
+          // one expands to whatever bounded space it is offered, and in a
+          // Stack that is the entire tile.
+          height: _size,
+          constraints: const BoxConstraints(minWidth: _size),
+          // Tight enough that any single digit still fits inside the circle;
+          // two digits push past it and the pill stretches.
+          padding: const EdgeInsets.symmetric(horizontal: 3),
           decoration: BoxDecoration(
             color: AppColors.olive600,
             borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -138,6 +145,7 @@ class _CountBadge extends StatelessWidget {
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 '$count',

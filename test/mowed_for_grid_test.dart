@@ -56,6 +56,10 @@ void main() {
       );
       expect(badge.width, lessThan(30), reason: 'the $count badge is $badge');
       expect(badge.height, lessThan(30), reason: 'the $count badge is $badge');
+      // A single digit draws a circle: "1" is narrow enough that padding
+      // alone left it an upright oval.
+      expect(badge.width, badge.height,
+          reason: 'the $count badge is not round: $badge');
     }
   });
 
@@ -93,5 +97,23 @@ void main() {
     // right — so relative to its own tile, the small count sits higher.
     expect(busiest.center.dy - busiestTile.center.dy,
         greaterThan(smallest.center.dy - smallestTile.center.dy));
+  });
+
+  testWidgets('a two-digit count stretches into a pill', (tester) async {
+    await pumpGrid(
+      tester,
+      tallies({MowedCategory.elderly: 15, MowedCategory.veteran: 7}),
+    );
+
+    Rect badge(String count) => tester.getRect(
+          find
+              .ancestor(of: find.text(count), matching: find.byType(Container))
+              .first,
+        );
+
+    // Single digit stays round, two digits grow sideways but not taller.
+    expect(badge('7').width, badge('7').height);
+    expect(badge('15').width, greaterThan(badge('7').width));
+    expect(badge('15').height, badge('7').height);
   });
 }
