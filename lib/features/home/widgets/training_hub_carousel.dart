@@ -49,6 +49,9 @@ class _TrainingHubCarouselState extends State<TrainingHubCarousel> {
           height: TrainingHubCarousel.cardHeight,
           child: PageView.builder(
             controller: _controller,
+            // A PageView clips to its viewport, which sliced the card's
+            // shadow off square at the page edge.
+            clipBehavior: Clip.none,
             itemCount: videos.length,
             onPageChanged: (page) => setState(() => _page = page),
             itemBuilder: (context, i) => Padding(
