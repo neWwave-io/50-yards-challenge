@@ -55,7 +55,7 @@ class _LoadingPageWidgetState extends State<LoadingPageWidget>
         if (role == 'admin' || role == 'super_admin') {
           context.pushNamed(HomeAdminWidget.routeName);
         } else {
-          context.pushNamed(HomePageWidget.routeName);
+          context.pushNamed(HomeScreen.routeName);
         }
       } else {
         context.pushNamed(SignInScreen.routeName);

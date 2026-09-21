@@ -1868,7 +1868,7 @@ class _ProfileEditWidgetState extends State<ProfileEditWidget> {
                                             });
 
                                             context.pushNamed(
-                                                HomePageWidget.routeName);
+                                                HomeScreen.routeName);
                                           },
                                         ),
                                       ),

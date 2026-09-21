@@ -10,6 +10,8 @@ import '/backend/schema/enums/enums.dart';
 
 import '/auth/base_auth_user_provider.dart';
 import '/auth/firebase_auth/auth_util.dart';
+import '/component/nav/nav_widget.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '/backend/push_notifications/push_notifications_handler.dart'
     show PushNotificationsHandler;
@@ -19,6 +21,7 @@ import '/flutter_flow/lat_lng.dart';
 import '/flutter_flow/place.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/features/auth/sign_in/sign_in_screen.dart';
+import '/features/home/home_screen.dart';
 import '/features/auth/sign_up/sign_up_screen.dart';
 import 'serialization_util.dart';
 
@@ -96,6 +99,19 @@ SignUpScreen _signUpScreen(BuildContext context) => SignUpScreen(
           context.goNamedAuth(LoadingPageWidget.routeName, context.mounted),
     );
 
+/// Opens a training video in the browser, or says why it cannot.
+Future<void> _openLink(BuildContext context, String? url) async {
+  final target = url == null ? null : Uri.tryParse(url);
+  if (target == null ||
+      !await launchUrl(target, mode: LaunchMode.externalApplication)) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('That video is not available yet.')),
+      );
+    }
+  }
+}
+
 GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
       initialLocation: '/',
       debugLogDiagnostics: true,
@@ -114,9 +130,19 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
               : _signUpScreen(context),
         ),
         FFRoute(
-          name: HomePageWidget.routeName,
-          path: HomePageWidget.routePath,
-          builder: (context, params) => HomePageWidget(),
+          name: HomeScreen.routeName,
+          path: HomeScreen.routePath,
+          builder: (context, params) => HomeScreen(
+            onStartMowing: () =>
+                context.pushNamed(SubmitLawnWidget.routeName),
+            onSeeAnnouncements: () =>
+                context.pushNamed(AnnouncementWidget.routeName),
+            onOpenAnnouncement: (_) =>
+                context.pushNamed(AnnouncementWidget.routeName),
+            onOpenBadges: () => context.pushNamed(AchivementWidget.routeName),
+            onWatchTraining: (video) => _openLink(context, video.link),
+            bottomBar: NavWidget(pageIndex: 0),
+          ),
         ),
         FFRoute(
           name: SignInScreen.routeName,

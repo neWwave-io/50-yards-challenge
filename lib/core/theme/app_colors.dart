@@ -27,6 +27,21 @@ abstract final class AppColors {
   /// `green/moss/50` — the add-a-child card's ground.
   static const moss50 = Color(0xFFF3F8EC);
 
+  /// `green/moss/500` — progress accents on the home page.
+  static const moss500 = Color(0xFF7CB342);
+
+  /// `green/moss/700` — "See More" links.
+  static const moss700 = Color(0xFF4F6529);
+
+  /// `green/moss/900` — the big numbers on the progress cards.
+  static const moss900 = Color(0xFF1F2A0F);
+
+  /// `olive/200` — the knob of an active toggle.
+  static const olive200 = Color(0xFFCED8B6);
+
+  /// The darkest stop of the home header's gradient.
+  static const olive800 = Color(0xFF344D24);
+
   // --- neutrals ---------------------------------------------------------
   /// `neutral text/100` — text on brand fills.
   static const neutralText100 = Color(0xFFEDEFE9);
@@ -42,6 +57,18 @@ abstract final class AppColors {
 
   /// `neutral/500`
   static const neutral500 = Color(0xFF6B7263);
+
+  /// `neutral/400` — the "20 days ago" pill.
+  static const neutral400 = Color(0xFF9AA48C);
+
+  /// `neutral/700` — a card's heading.
+  static const neutral700 = Color(0xFF3D4337);
+
+  /// `neutral/800`
+  static const neutral800 = Color(0xFF2A2F24);
+
+  /// `text/secondary` — supporting copy inside a card.
+  static const textSecondary = Color(0xFF45483F);
 
   // --- semantic surfaces ------------------------------------------------
   /// `color/surface/default`
@@ -62,6 +89,36 @@ abstract final class AppColors {
   /// `OldColors/Neutral/Primary Text` — the Material date picker's ink. Kept
   /// only where that component's own palette applies.
   static const calendarInk = Color(0xFF212121);
+
+  /// `OldColors/Neutral/Secondary Text` — announcement body and dates.
+  static const inkMuted = Color(0xFF757575);
+
+  // --- home page ---------------------------------------------------------
+
+  /// A day of the week that was mowed.
+  static const dayDone = Color(0xFF5A9E2F);
+
+  /// Today, still in progress.
+  static const dayToday = Color(0xFFFFC107);
+
+  /// The ground of a day tile.
+  static const dayTile = Color(0x80F4F9EC);
+
+  /// The hairline around a day tile.
+  static const dayTileBorder = Color(0xFFE2EBD4);
+
+  /// The pulsing dot on the requested-lawn card.
+  static const requestPulse = Color(0xFF42A645);
+
+  /// The home header's radial wash, lightest at the top left.
+  static const headerWash = [olive500, olive700, olive800, olive900];
+
+  /// The disc behind the avatar.
+  static const avatarDisc = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF7DC142), Color(0xFF2D5A1B)],
+  );
 
   // --- status -----------------------------------------------------------
   /// `status/Danger/danger`

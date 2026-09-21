@@ -87,7 +87,7 @@ class _NavWidgetState extends State<NavWidget> {
                         onTap: () async {
                           if (widget!.pageIndex != 0) {
                             context.pushNamed(
-                              HomePageWidget.routeName,
+                              HomeScreen.routeName,
                               extra: <String, dynamic>{
                                 '__transition_info__': TransitionInfo(
                                   hasTransition: true,

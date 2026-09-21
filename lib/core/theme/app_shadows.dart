@@ -18,6 +18,16 @@ abstract final class AppShadows {
     BoxShadow(color: Color(0x1F1C4002), offset: Offset(0, 4), blurRadius: 12),
   ];
 
+  /// `shadow new` — the resting shadow of a home-page card.
+  static const card = <BoxShadow>[
+    BoxShadow(color: Color(0x1F1C4002), offset: Offset(0, 1), blurRadius: 10),
+  ];
+
+  /// `shad/p2.container` — the challenge card, which sits over the header.
+  static const cardRaised = <BoxShadow>[
+    BoxShadow(color: Color(0x263A6618), offset: Offset(0, 4), blurRadius: 15),
+  ];
+
   /// An open dropdown panel.
   static const dropdown = <BoxShadow>[
     BoxShadow(color: Color(0x1F2F7F33), offset: Offset(0, 4), blurRadius: 20),

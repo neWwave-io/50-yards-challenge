@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../../../core/constants/child_options.dart';
+import '../../../core/utils/date_format.dart';
 
 /// One child being signed up. Held in memory through step 2; a repository
 /// turns it into a `children` row once sign-up succeeds.
@@ -52,22 +53,5 @@ class Child {
       );
 }
 
-const _monthAbbreviations = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-];
-
 /// "12th/Sep", the format the design uses on the summary row.
-String formatBirthday(DateTime date) =>
-    '${_ordinal(date.day)}/${_monthAbbreviations[date.month - 1]}';
-
-/// "1st", "2nd", "3rd", "4th"… 11–13 are always "th".
-String _ordinal(int day) {
-  if (day >= 11 && day <= 13) return '${day}th';
-  return switch (day % 10) {
-    1 => '${day}st',
-    2 => '${day}nd',
-    3 => '${day}rd',
-    _ => '${day}th',
-  };
-}
+String formatBirthday(DateTime date) => dayOverMonth(date);
