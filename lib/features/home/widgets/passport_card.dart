@@ -35,11 +35,13 @@ class PassportCard extends StatelessWidget {
             top: -1,
             bottom: -1,
             child: IgnorePointer(
-              // Blurred until it reads as a wash of colour rather than a
-              // picture — the design blurs this layer and lays a second
-              // blur over it.
+              // Softened, but still recognisably a passport. The design
+              // stacks two blurs here: the image's own layer blur and a
+              // "Background blur 4" over it. Each is a 2px CSS blur (Figma
+              // shows double), i.e. sigma 2, and two gaussians combine as
+              // sqrt(2² + 2²) ≈ 2.8.
               child: ImageFiltered(
-                imageFilter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                imageFilter: ui.ImageFilter.blur(sigmaX: 2.8, sigmaY: 2.8),
                 child: Opacity(
                   opacity: 0.4,
                   child: Image.asset(
