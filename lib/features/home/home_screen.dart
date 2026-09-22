@@ -126,7 +126,15 @@ class _Content extends StatelessWidget {
           // text.
           Stack(
             children: [
-              HomeHeader(profile: data.profile),
+              HomeHeader(
+                profile: data.profile,
+                availability: data.availability,
+                onGoAway: ({DateTime? returnsOn}) => _report(
+                  context,
+                  controller.goAway(returnsOn: returnsOn),
+                ),
+                onComeBack: () => _report(context, controller.comeBack()),
+              ),
               Padding(
                 padding: EdgeInsets.only(
                   top: MediaQuery.paddingOf(context).top +
@@ -224,6 +232,15 @@ class _Content extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Shows why a status change failed, if it did.
+Future<void> _report(BuildContext context, Future<String?> change) async {
+  final problem = await change;
+  if (problem != null && context.mounted) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(problem)));
   }
 }
 

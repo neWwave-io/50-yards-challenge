@@ -152,7 +152,9 @@ class _DayTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dimmed = state == DayState.upcoming;
+    // Days to come and days away are both "not yet counted" — neither a lawn
+    // nor a miss — so they share the faded look.
+    final dimmed = state == DayState.upcoming || state == DayState.away;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -232,6 +234,7 @@ class _DayRingPainter extends CustomPainter {
         }
       case DayState.missed:
       case DayState.upcoming:
+      case DayState.away:
         break;
     }
   }

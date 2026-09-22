@@ -37,6 +37,10 @@ class HomeRepository {
       _optional('announcements', _announcements, const <Announcement>[]),
       _optional('activity feed', _activity, const <ActivityEntry>[]),
       _optional('training videos', _training, const <TrainingVideo>[]),
+      _optional('availability', () => _availability(profileId),
+          const Availability.available()),
+      _optional('away days', () => _awayPeriods(profileId),
+          const <_AwayPeriod>[]),
     ]);
 
     final profile = results[0] as HomeProfile;
@@ -45,11 +49,14 @@ class HomeRepository {
     final announcements = results[3] as List<Announcement>;
     final activity = results[4] as List<ActivityEntry>;
     final training = results[5] as List<TrainingVideo>;
+    final availability = results[6] as Availability;
+    final away = results[7] as List<_AwayPeriod>;
 
     return HomeData(
       profile: profile,
+      availability: availability,
       streak: streak,
-      week: _weekFrom(lawns),
+      week: _weekFrom(lawns, away),
       categories: _tally(lawns),
       announcements: announcements.take(2).toList(),
       training: training,
@@ -181,6 +188,56 @@ class HomeRepository {
     ];
   }
 
+  Future<Availability> _availability(String profileId) async {
+    final rows = await supabase
+        .rpc('profile_availability', params: {'p_profile_id': profileId});
+    final row = (rows as List).firstOrNull as Map<String, dynamic>?;
+    if (row == null) return const Availability.available();
+    return Availability(
+      isAway: row['is_away'] as bool? ?? false,
+      returnsOn: _date(row['returns_on']),
+      availableSince: _date(row['available_since']),
+    );
+  }
+
+  Future<List<_AwayPeriod>> _awayPeriods(String profileId) async {
+    final rows = await supabase
+        .from('away_periods')
+        .select('starts_on, returns_on')
+        .eq('profile_id', profileId);
+    return [
+      for (final row in rows as List)
+        if (_date(row['starts_on']) case final start?)
+          _AwayPeriod(start: start, returns: _date(row['returns_on'])),
+    ];
+  }
+
+  /// Postgres `date` arrives as "2026-09-30"; keep it a calendar date.
+  static DateTime? _date(Object? value) {
+    if (value is! String) return null;
+    final parsed = DateTime.tryParse(value);
+    return parsed == null ? null : DateTime(parsed.year, parsed.month, parsed.day);
+  }
+
+  // --- writes ---------------------------------------------------------------
+
+  /// Goes offline, or moves the return date while already away. [returnsOn]
+  /// is the day they are back; null means no date yet.
+  Future<void> setAway({DateTime? returnsOn}) async {
+    await supabase.rpc('set_away', params: {
+      'p_returns_on': returnsOn == null ? null : _isoDate(returnsOn),
+    });
+  }
+
+  /// Back online, early or on time.
+  Future<void> setAvailable() async {
+    await supabase.rpc('set_available');
+  }
+
+  static String _isoDate(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
+
   Future<List<ActivityEntry>> _activity() async {
     final rows = await supabase
         .from('lawns')
@@ -207,7 +264,7 @@ class HomeRepository {
   }
 
   /// Sunday-first, matching the design's tracker.
-  static MowingWeek _weekFrom(List<_LawnRow> lawns) {
+  static MowingWeek _weekFrom(List<_LawnRow> lawns, List<_AwayPeriod> away) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     // DateTime.weekday is Mon=1..Sun=7.
@@ -221,7 +278,9 @@ class HomeRepository {
       days: [
         for (var i = 0; i < MowingWeek.length; i++)
           switch (sunday.add(Duration(days: i))) {
+            // A lawn outranks everything: mowing while "away" still counts.
             final day when mowedDays.contains(day) => DayState.mowed,
+            final day when away.any((p) => p.covers(day)) => DayState.away,
             final day when day == today => DayState.today,
             final day when day.isBefore(today) => DayState.missed,
             _ => DayState.upcoming,
@@ -249,6 +308,18 @@ class HomeRepository {
         ),
     ];
   }
+}
+
+class _AwayPeriod {
+  const _AwayPeriod({required this.start, this.returns});
+
+  final DateTime start;
+
+  /// The day they are back, so the last day away is the one before.
+  final DateTime? returns;
+
+  bool covers(DateTime day) =>
+      !day.isBefore(start) && (returns == null || day.isBefore(returns!));
 }
 
 class _LawnRow {

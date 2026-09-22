@@ -28,6 +28,26 @@ class HomeController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Goes offline. [returnsOn] is the day they are back; null means no date.
+  ///
+  /// Returns a message to show if it failed. Reloads on success, because
+  /// going away changes the header, the week tracker and the streak at once.
+  Future<String?> goAway({DateTime? returnsOn}) =>
+      _change(() => repository.setAway(returnsOn: returnsOn));
+
+  /// Back online.
+  Future<String?> comeBack() => _change(repository.setAvailable);
+
+  Future<String?> _change(Future<void> Function() write) async {
+    try {
+      await write();
+    } catch (e) {
+      return 'Could not update your status: $e';
+    }
+    await load();
+    return null;
+  }
+
   Future<void> load() async {
     _loading = true;
     _error = null;

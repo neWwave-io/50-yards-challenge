@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_format.dart';
 import '../data/home_data.dart';
+import 'availability_badge.dart';
 
 /// The dark green banner at the top of the home page.
 ///
@@ -11,10 +11,29 @@ import '../data/home_data.dart';
 /// banner is drawn taller than its content and the page stacks the card on
 /// top of it.
 class HomeHeader extends StatelessWidget {
-  const HomeHeader({super.key, required this.profile, this.onStatusTap});
+  const HomeHeader({
+    super.key,
+    required this.profile,
+    required this.availability,
+    required this.onGoAway,
+    required this.onComeBack,
+  });
 
   final HomeProfile profile;
-  final VoidCallback? onStatusTap;
+  final Availability availability;
+  final Future<void> Function({DateTime? returnsOn}) onGoAway;
+  final Future<void> Function() onComeBack;
+
+  /// The line under the greeting says where the family stands right now.
+  String? get statusLine {
+    if (availability.isAway) {
+      final back = availability.returnsOn;
+      return back == null ? 'Away for now' : 'Away until ${dayAndMonth(back)}';
+    }
+    // Their last return, falling back to when they joined.
+    final since = availability.availableSince ?? profile.joinedAt;
+    return since == null ? null : 'Available Since ${dayAndMonth(since)}';
+  }
 
   static const height = 263.0;
 
@@ -27,7 +46,7 @@ class HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final joined = profile.joinedAt;
+    final status = statusLine;
 
     return Container(
       height: height,
@@ -73,9 +92,9 @@ class HomeHeader extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.greeting,
                         ),
-                        if (joined != null)
+                        if (status != null)
                           Text(
-                            'Available Since ${dayAndMonth(joined)}',
+                            status,
                             style: AppTypography.caption
                                 .copyWith(color: AppColors.surface),
                           ),
@@ -83,14 +102,10 @@ class HomeHeader extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: onStatusTap,
-                    child: SvgPicture.asset(
-                      'assets/icons/home_status.svg',
-                      width: 44,
-                      height: 44,
-                    ),
+                  AvailabilityBadge(
+                    availability: availability,
+                    onGoAway: onGoAway,
+                    onComeBack: onComeBack,
                   ),
                 ],
               ),

@@ -10,14 +10,25 @@ import 'package:the_50_yard_challenge/features/home/widgets/training_hub_card.da
 class FakeHomeRepository implements HomeRepository {
   FakeHomeRepository(this.data);
 
-  final HomeData data;
+  /// Replace to simulate what the server returns after a write.
+  HomeData data;
   var loads = 0;
+
+  /// Every setAway call, by the return date it asked for.
+  final awayCalls = <DateTime?>[];
+  var availableCalls = 0;
 
   @override
   Future<HomeData> load() async {
     loads++;
     return data;
   }
+
+  @override
+  Future<void> setAway({DateTime? returnsOn}) async => awayCalls.add(returnsOn);
+
+  @override
+  Future<void> setAvailable() async => availableCalls++;
 }
 
 HomeData buildData({
@@ -30,8 +41,10 @@ HomeData buildData({
   List<Announcement> announcements = const [],
   List<ActivityEntry> activity = const [],
   List<TrainingVideo> training = const [],
+  Availability availability = const Availability.available(),
 }) =>
     HomeData(
+      availability: availability,
       profile: HomeProfile(
         displayName: 'Marcus Reed',
         state: 'Alabama',

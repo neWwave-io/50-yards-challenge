@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/app_theme.dart';
+import 'app_primary_button.dart';
 
-/// Shows the design's "Set Date" calendar and resolves to the chosen day, or
-/// null if it was dismissed.
+/// Shows the design's calendar and resolves to the chosen day, or null if it
+/// was dismissed.
+///
+/// With no [confirmLabel] a tap on a day picks it and closes ("Set Date").
+/// With one, a tap only selects, and the button confirms ("Set New" / Save)
+/// — for a choice worth a second look, like when you will be back.
 Future<DateTime?> showAppDatePicker(
   BuildContext context, {
   DateTime? initialDate,
   required DateTime firstDate,
   required DateTime lastDate,
+  String title = 'Set Date',
+  String? confirmLabel,
 }) {
   return showDialog<DateTime>(
     context: context,
@@ -18,6 +25,8 @@ Future<DateTime?> showAppDatePicker(
       initialDate: initialDate,
       firstDate: firstDate,
       lastDate: lastDate,
+      title: title,
+      confirmLabel: confirmLabel,
     ),
   );
 }
@@ -30,11 +39,19 @@ class AppDatePickerDialog extends StatefulWidget {
     this.initialDate,
     required this.firstDate,
     required this.lastDate,
+    this.title = 'Set Date',
+    this.confirmLabel,
   });
 
   final DateTime? initialDate;
   final DateTime firstDate;
   final DateTime lastDate;
+  final String title;
+
+  /// When set, days only select and this button confirms.
+  final String? confirmLabel;
+
+  bool get _confirms => confirmLabel != null;
 
   @override
   State<AppDatePickerDialog> createState() => _AppDatePickerDialogState();
@@ -81,6 +98,21 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
         decoration: BoxDecoration(
           color: AppColors.surface,
+          // The confirming variant carries the design's green wash.
+          gradient: widget._confirms
+              ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color.alphaBlend(
+                        AppColors.olive50.withValues(alpha: 0.3),
+                        AppColors.surface),
+                    Color.alphaBlend(
+                        AppColors.olive600.withValues(alpha: 0.3),
+                        AppColors.surface),
+                  ],
+                )
+              : null,
           borderRadius: BorderRadius.circular(AppRadii.dialog),
         ),
         clipBehavior: Clip.antiAlias,
@@ -95,6 +127,18 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: _pickingYear ? _yearGrid() : _monthGrid(),
             ),
+            if (widget._confirms) ...[
+              const SizedBox(height: AppSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                child: AppPrimaryButton(
+                  label: widget.confirmLabel!,
+                  onPressed: _selected == null
+                      ? null
+                      : () => Navigator.of(context).pop(_selected),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -107,7 +151,7 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Set Date', style: AppTypography.calendarTitle),
+          Text(widget.title, style: AppTypography.calendarTitle),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => Navigator.of(context).pop(),
@@ -239,7 +283,7 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
       enabled: !outOfRange,
       onTap: () {
         setState(() => _selected = date);
-        Navigator.of(context).pop(date);
+        if (!widget._confirms) Navigator.of(context).pop(date);
       },
     );
   }

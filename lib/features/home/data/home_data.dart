@@ -2,6 +2,7 @@
 class HomeData {
   const HomeData({
     required this.profile,
+    this.availability = const Availability.available(),
     required this.streak,
     required this.week,
     required this.categories,
@@ -11,6 +12,10 @@ class HomeData {
   });
 
   final HomeProfile profile;
+
+  /// Whether the family is taking lawns right now.
+  final Availability availability;
+
   final DayStreak streak;
   final MowingWeek week;
 
@@ -73,6 +78,27 @@ class HomeProfile {
   }
 }
 
+/// Whether a family is taking lawns, from `profile_availability`.
+class Availability {
+  const Availability({
+    required this.isAway,
+    this.returnsOn,
+    this.availableSince,
+  });
+
+  const Availability.available({this.availableSince})
+      : isAway = false,
+        returnsOn = null;
+
+  final bool isAway;
+
+  /// The day they are back. Null while away means no date was set.
+  final DateTime? returnsOn;
+
+  /// When they last came back, or joined if they never left.
+  final DateTime? availableSince;
+}
+
 /// Consecutive days with a lawn, from `profile_day_streaks`.
 class DayStreak {
   const DayStreak({required this.current, required this.longest});
@@ -107,6 +133,10 @@ enum DayState {
 
   /// Later this week.
   upcoming,
+
+  /// The family was offline. Neither a lawn nor a miss — it does not break
+  /// the streak either.
+  away,
 }
 
 /// How many lawns went to one kind of neighbour.
