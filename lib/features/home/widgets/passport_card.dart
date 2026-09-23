@@ -18,6 +18,11 @@ class PassportCard extends StatelessWidget {
   /// Fifty hours, to match the fifty lawns. Not yet configurable anywhere.
   static const goalHours = 50;
 
+  /// How far the passport runs past the card, top and bottom. The asset is a
+  /// square canvas with the booklet padded inside it, so the bleed is what
+  /// brings the booklet itself up to the card's own height.
+  static const _bleed = 26.0;
+
   @override
   Widget build(BuildContext context) {
     return AppCard(
@@ -31,9 +36,14 @@ class PassportCard extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-            left: -1,
-            top: -1,
-            bottom: -1,
+            // Taller than the card, so the booklet runs past both edges as
+            // it does in the design rather than sitting inside them.
+            // Out past the card's own padding as well, so the booklet starts
+            // at the card's edge and the ring sits over its middle instead of
+            // hiding it.
+            left: -(AppSpacing.lg + _bleed),
+            top: -_bleed,
+            bottom: -_bleed,
             child: IgnorePointer(
               // Softened, but still recognisably a passport. The design
               // stacks two blurs here: the image's own layer blur and a
@@ -44,10 +54,16 @@ class PassportCard extends StatelessWidget {
                 imageFilter: ui.ImageFilter.blur(sigmaX: 2.8, sigmaY: 2.8),
                 child: Opacity(
                   opacity: 0.4,
-                  child: Image.asset(
-                    'assets/images/home/passport_glow.png',
-                    width: 99,
-                    fit: BoxFit.cover,
+                  // The asset is square, and the Stack leaves the width
+                  // unbounded, so the ratio is what turns the card's height
+                  // into a width. Given a fixed width instead, the booklet
+                  // was cropped down to a sliver.
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: Image.asset(
+                      'assets/images/home/passport_glow.png',
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
