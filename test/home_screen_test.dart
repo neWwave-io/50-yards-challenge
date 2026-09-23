@@ -126,7 +126,6 @@ void main() {
     expect(find.text('Nothing posted yet.'), findsOneWidget);
     expect(find.text('No lawns have been finished yet.'), findsOneWidget);
     expect(find.text('No training videos yet.'), findsOneWidget);
-    expect(find.text('No nearby requests yet'), findsOneWidget);
   });
 
   testWidgets('fills the sections when there is content', (tester) async {
@@ -206,6 +205,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(knobSide(), Alignment.centerRight);
+  });
+
+  // Off is the state the design draws: no count, a plain dot, and a line
+  // saying the family is closed to requests.
+  testWidgets('the requested-lawn card says when requests are off',
+      (tester) async {
+    await pumpHome(tester, buildData());
+
+    expect(find.text('You Are Not Open To Get Any Lawn Request'),
+        findsOneWidget);
+    expect(find.text('No nearby requests yet'), findsNothing);
+
+    await tester.tap(find.bySemanticsLabel('Take lawn requests from the map'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('You Are Not Open To Get Any Lawn Request'), findsNothing);
+    expect(find.text('No nearby requests yet'), findsOneWidget);
   });
 
   testWidgets('a finished challenge says completed instead of counting',

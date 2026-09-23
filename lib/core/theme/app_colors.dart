@@ -46,6 +46,9 @@ abstract final class AppColors {
   /// `neutral text/100` — text on brand fills.
   static const neutralText100 = Color(0xFFEDEFE9);
 
+  /// `neutral text/300` — the knob of a switch that is off.
+  static const neutralText300 = Color(0xFFC2C7B8);
+
   /// `neutral text/500` — secondary / meta text.
   static const neutralText500 = Color(0xFF737A6C);
 

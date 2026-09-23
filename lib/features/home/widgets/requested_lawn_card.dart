@@ -38,7 +38,8 @@ class RequestedLawnCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const _PulsingPin(),
+              // Off, the design drops the pin for a plain grey dot.
+              accepting ? const _PulsingPin() : const _OfflineDot(),
               const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(
@@ -51,13 +52,15 @@ class RequestedLawnCard extends StatelessWidget {
                         color: AppColors.neutralText900,
                       ),
                     ),
-                    Text(
-                      count == null
-                          ? 'No nearby requests yet'
-                          : '$count nearby requests',
-                      style: AppTypography.caption
-                          .copyWith(color: AppColors.textSecondary),
-                    ),
+                    // Nothing to count while requests are turned off.
+                    if (accepting)
+                      Text(
+                        count == null
+                            ? 'No nearby requests yet'
+                            : '$count nearby requests',
+                        style: AppTypography.caption
+                            .copyWith(color: AppColors.textSecondary),
+                      ),
                   ],
                 ),
               ),
@@ -66,7 +69,10 @@ class RequestedLawnCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Neighbors in your state who need a hand with their lawn.',
+            accepting
+                ? 'Neighbors in your state who need a hand with their lawn.'
+                // Title case, as the design sets it.
+                : 'You Are Not Open To Get Any Lawn Request',
             style: AppTypography.bodySmall
                 .copyWith(color: AppColors.textSecondary),
           ),
@@ -103,6 +109,22 @@ class _PulsingPin extends StatelessWidget {
       );
 }
 
+/// The pin's stand-in while requests are turned off: a 6px grey dot, which
+/// is all the design leaves of it.
+class _OfflineDot extends StatelessWidget {
+  const _OfflineDot();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 6,
+        height: 6,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.neutralText500,
+        ),
+      );
+}
+
 class _Toggle extends StatelessWidget {
   const _Toggle({required this.value, required this.onTap});
 
@@ -123,7 +145,7 @@ class _Toggle extends StatelessWidget {
           height: 24,
           padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-            color: value ? AppColors.olive500 : AppColors.borderDefault,
+            color: value ? AppColors.olive500 : AppColors.neutralText500,
             borderRadius: BorderRadius.circular(AppRadii.pill),
           ),
           alignment: value ? Alignment.centerRight : Alignment.centerLeft,
@@ -132,12 +154,17 @@ class _Toggle extends StatelessWidget {
             height: 20,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: value ? AppColors.olive200 : AppColors.surface,
+              color: value ? AppColors.olive200 : AppColors.neutralText300,
               boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33000000),
+                  offset: Offset(1, 0),
+                  blurRadius: 1.2,
+                ),
                 BoxShadow(
                   color: Color(0x26000000),
                   offset: Offset(0, 1),
-                  blurRadius: 2,
+                  blurRadius: 1.2,
                 ),
               ],
             ),
