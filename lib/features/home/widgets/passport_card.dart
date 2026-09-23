@@ -20,7 +20,7 @@ class PassportCard extends StatelessWidget {
 
   /// The passport asset's own shape, trimmed to the booklet. Held here so
   /// the art can be sized off the card's height without being cropped.
-  static const _passportRatio = 257 / 329;
+  static const _passportRatio = 202 / 302;
 
   @override
   Widget build(BuildContext context) {
