@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:the_50_yard_challenge/core/widgets/app_progress_ring.dart';
 import 'package:the_50_yard_challenge/features/home/data/home_data.dart';
 import 'package:the_50_yard_challenge/features/home/widgets/mowed_for_grid.dart';
 
@@ -97,6 +100,27 @@ void main() {
     // right — so relative to its own tile, the small count sits higher.
     expect(busiest.center.dy - busiestTile.center.dy,
         greaterThan(smallest.center.dy - smallestTile.center.dy));
+  });
+
+  // With no lawns to measure, a half ring hanging off one side read as a
+  // broken arc rather than an empty one.
+  testWidgets('an empty category closes its ring into a full circle',
+      (tester) async {
+    await pumpGrid(tester, tallies({MowedCategory.elderly: 4}));
+
+    double sweepOf(String label) {
+      final tile =
+          find.ancestor(of: find.text(label), matching: find.byType(Stack));
+      return tester
+          .widget<AppProgressRing>(
+            find.descendant(of: tile.first, matching: find.byType(AppProgressRing)),
+          )
+          .sweep;
+    }
+
+    expect(sweepOf('Veteran'), closeTo(math.pi * 2, 0.001));
+    expect(sweepOf('Elderly'), closeTo(math.pi, 0.001),
+        reason: 'a category with lawns keeps the design\'s half turn');
   });
 
   testWidgets('a two-digit count stretches into a pill', (tester) async {

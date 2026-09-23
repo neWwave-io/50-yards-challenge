@@ -53,6 +53,11 @@ class _Tile extends StatelessWidget {
         final thickness = size / 9;
         final sweep = _maxSweep * tally.share;
 
+        // With nothing mowed for this group there is no arc to measure, so
+        // the track closes into a full circle rather than leaving a half ring
+        // hanging off one side.
+        final track = tally.count == 0 ? math.pi * 2 : _maxSweep;
+
         return Stack(
           alignment: Alignment.center,
           clipBehavior: Clip.none,
@@ -63,7 +68,7 @@ class _Tile extends StatelessWidget {
               progress: tally.share,
               color: AppColors.olive600,
               startAngle: _start,
-              sweep: _maxSweep,
+              sweep: track,
             ),
             Padding(
               // Clear of the ring, so a two-line label cannot run under it.
