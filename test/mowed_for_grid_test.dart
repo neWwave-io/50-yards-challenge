@@ -123,10 +123,14 @@ void main() {
         reason: 'a category with lawns keeps the design\'s half turn');
   });
 
-  testWidgets('a two-digit count stretches into a pill', (tester) async {
+  testWidgets('a long count stretches into a pill', (tester) async {
     await pumpGrid(
       tester,
-      tallies({MowedCategory.elderly: 15, MowedCategory.veteran: 7}),
+      tallies({
+        MowedCategory.elderly: 120,
+        MowedCategory.singleParent: 15,
+        MowedCategory.veteran: 7,
+      }),
     );
 
     Rect badge(String count) => tester.getRect(
@@ -135,9 +139,11 @@ void main() {
               .first,
         );
 
-    // Single digit stays round, two digits grow sideways but not taller.
+    // One digit and two both fit the circle; three push it sideways, and
+    // never taller.
     expect(badge('7').width, badge('7').height);
-    expect(badge('15').width, greaterThan(badge('7').width));
-    expect(badge('15').height, badge('7').height);
+    expect(badge('15').width, badge('7').width);
+    expect(badge('120').width, greaterThan(badge('7').width));
+    expect(badge('120').height, badge('7').height);
   });
 }
