@@ -18,10 +18,9 @@ class PassportCard extends StatelessWidget {
   /// Fifty hours, to match the fifty lawns. Not yet configurable anywhere.
   static const goalHours = 50;
 
-  /// How far the passport runs past the card, top and bottom. The asset is a
-  /// square canvas with the booklet padded inside it, so the bleed is what
-  /// brings the booklet itself up to the card's own height.
-  static const _bleed = 26.0;
+  /// The passport asset's own shape, trimmed to the booklet. Held here so
+  /// the art can be sized off the card's height without being cropped.
+  static const _passportRatio = 257 / 329;
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +35,15 @@ class PassportCard extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-            // Taller than the card, so the booklet runs past both edges as
-            // it does in the design rather than sitting inside them.
-            // Out past the card's own padding as well, so the booklet starts
-            // at the card's edge and the ring sits over its middle instead of
-            // hiding it.
-            left: -(AppSpacing.lg + _bleed),
-            top: -_bleed,
-            bottom: -_bleed,
+            // As tall as the card and no taller, so the whole booklet shows
+            // rather than being cut off top and bottom. Out past the card's
+            // own padding, so it starts at the card's edge and the ring sits
+            // over its middle.
+            // Out past the card's padding on three sides — exactly to its
+            // edges, never beyond.
+            left: -AppSpacing.lg,
+            top: -AppSpacing.lg,
+            bottom: -AppSpacing.lg,
             child: IgnorePointer(
               // Softened, but still recognisably a passport. The design
               // stacks two blurs here: the image's own layer blur and a
@@ -54,15 +54,14 @@ class PassportCard extends StatelessWidget {
                 imageFilter: ui.ImageFilter.blur(sigmaX: 2.8, sigmaY: 2.8),
                 child: Opacity(
                   opacity: 0.4,
-                  // The asset is square, and the Stack leaves the width
-                  // unbounded, so the ratio is what turns the card's height
-                  // into a width. Given a fixed width instead, the booklet
-                  // was cropped down to a sliver.
+                  // The Stack leaves the width unbounded, so the ratio is
+                  // what turns the card's height into a width. Given a fixed
+                  // width instead, the booklet was cropped down to a sliver.
                   child: AspectRatio(
-                    aspectRatio: 1,
+                    aspectRatio: _passportRatio,
                     child: Image.asset(
                       'assets/images/home/passport_glow.png',
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
