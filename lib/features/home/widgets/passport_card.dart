@@ -33,14 +33,17 @@ class PassportCard extends StatelessWidget {
         stops: [0, 0.6, 1],
       ),
       child: Stack(
+        // The card's own clip already rounds off anything that reaches its
+        // edge. Without this the Stack would clip first, at the content box,
+        // and cut the art back to inside the card's padding.
+        clipBehavior: Clip.none,
         children: [
           Positioned(
-            // As tall as the card and no taller, so the whole booklet shows
-            // rather than being cut off top and bottom. Out past the card's
-            // own padding, so it starts at the card's edge and the ring sits
-            // over its middle.
-            // Out past the card's padding on three sides — exactly to its
-            // edges, never beyond.
+            // As tall as the card and no taller, so the whole booklet
+            // shows rather than being cut off top and bottom. Out past the
+            // card's padding on three sides — exactly to its edges, never
+            // beyond — so the art starts at the card's edge and the ring
+            // sits over its middle.
             left: -AppSpacing.lg,
             top: -AppSpacing.lg,
             bottom: -AppSpacing.lg,

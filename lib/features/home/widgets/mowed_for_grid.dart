@@ -19,13 +19,18 @@ class MowedForGrid extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text('Who I Mowed For', style: AppTypography.sectionTitle),
-        const SizedBox(height: AppSpacing.xxl),
+        const SizedBox(height: AppSpacing.xxxl),
         GridView.count(
           crossAxisCount: 3,
-          mainAxisSpacing: AppSpacing.md,
+          // The rows sit further apart than the columns, as in the design.
+          mainAxisSpacing: AppSpacing.xl,
           crossAxisSpacing: AppSpacing.md,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
+          // A GridView left without padding takes the device insets from the
+          // MediaQuery instead, so the status bar height would be dropped
+          // above the first row and the home indicator below the last.
+          padding: EdgeInsets.zero,
           children: [for (final tally in tallies) _Tile(tally: tally)],
         ),
       ],
