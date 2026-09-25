@@ -177,7 +177,7 @@ class _HowToSumitOldWidgetState extends State<HowToSumitOldWidget> {
                           ),
                           FFButtonWidget(
                             onPressed: () async {
-                              context.pushNamed(SubmitLawnWidget.routeName);
+                              context.pushNamed(SubmitLawnScreen.routeName);
                             },
                             text: 'Summit Lawn',
                             icon: Icon(

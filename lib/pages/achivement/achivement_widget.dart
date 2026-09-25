@@ -256,7 +256,7 @@ class _AchivementWidgetState extends State<AchivementWidget> {
                                                 ),
                                                 action: () async {
                                                   context.pushNamed(
-                                                      SubmitLawnWidget
+                                                      SubmitLawnScreen
                                                           .routeName);
                                                 },
                                               ),

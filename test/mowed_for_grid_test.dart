@@ -60,8 +60,10 @@ void main() {
       expect(badge.width, lessThan(30), reason: 'the $count badge is $badge');
       expect(badge.height, lessThan(30), reason: 'the $count badge is $badge');
       // A single digit draws a circle: "1" is narrow enough that padding
-      // alone left it an upright oval.
-      expect(badge.width, badge.height,
+      // alone left it an upright oval. Compared loosely because the two
+      // sides are differences of laid-out edges, and a tile that starts on a
+      // fractional x can leave the width a float tick short of the height.
+      expect(badge.width, closeTo(badge.height, 0.01),
           reason: 'the $count badge is not round: $badge');
     }
   });

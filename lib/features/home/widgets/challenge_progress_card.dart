@@ -16,11 +16,19 @@ class ChallengeProgressCard extends StatelessWidget {
     required this.profile,
     required this.streak,
     this.onTap,
+    this.title = 'Challenge Progress',
+    this.ringShowsPercent = false,
   });
 
   final HomeProfile profile;
   final DayStreak streak;
   final VoidCallback? onTap;
+
+  /// The heading above the level. The profile calls it "Progress Overview".
+  final String title;
+
+  /// The profile's ring reads "6%" where the home ring counts lawns.
+  final bool ringShowsPercent;
 
   static const _ringDiameter = 342.0;
 
@@ -54,12 +62,15 @@ class ChallengeProgressCard extends StatelessWidget {
               Positioned(
                 left: -172 + _ringDiameter / 2 + 70 - 60,
                 top: -15 + _ringDiameter / 2 - 50,
-                child: _RingLabel(profile: profile),
+                child: _RingLabel(
+                  profile: profile,
+                  showsPercent: ringShowsPercent,
+                ),
               ),
               Positioned(
                 right: AppSpacing.lg,
                 top: 19,
-                child: _Level(profile: profile),
+                child: _Level(profile: profile, title: title),
               ),
               Positioned(
                 right: AppSpacing.lg,
@@ -110,13 +121,27 @@ class _Glow extends StatelessWidget {
 }
 
 class _RingLabel extends StatelessWidget {
-  const _RingLabel({required this.profile});
+  const _RingLabel({required this.profile, required this.showsPercent});
 
   final HomeProfile profile;
+  final bool showsPercent;
 
   @override
   Widget build(BuildContext context) {
     final done = profile.isComplete;
+
+    if (showsPercent) {
+      return SizedBox(
+        width: 120,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            '${(profile.progress * 100).round()}%',
+            style: AppTypography.ringNumber,
+          ),
+        ),
+      );
+    }
 
     return SizedBox(
       width: 120,
@@ -148,9 +173,10 @@ class _RingLabel extends StatelessWidget {
 }
 
 class _Level extends StatelessWidget {
-  const _Level({required this.profile});
+  const _Level({required this.profile, required this.title});
 
   final HomeProfile profile;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -161,7 +187,7 @@ class _Level extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Challenge Progress',
+            title,
             textAlign: TextAlign.right,
             style: AppTypography.cardTitle.copyWith(color: AppColors.olive700),
           ),

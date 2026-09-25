@@ -21,6 +21,10 @@ class AppFieldShell extends StatelessWidget {
     this.padding =
         const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
     this.onTap,
+    this.background = AppColors.surface,
+    this.borderColor,
+    this.shadow,
+    this.labelStyle,
   });
 
   final String label;
@@ -34,6 +38,14 @@ class AppFieldShell extends StatelessWidget {
   final EdgeInsets padding;
   final VoidCallback? onTap;
 
+  /// The four below let a caller that is not a form control — a submitted
+  /// photo, say — borrow the box and its notch label without inheriting the
+  /// resting / filled / focused palette. Each falls back to that palette.
+  final Color background;
+  final Color? borderColor;
+  final List<BoxShadow>? shadow;
+  final TextStyle? labelStyle;
+
   bool get _showLabel => focused || filled;
 
   @override
@@ -42,20 +54,22 @@ class AppFieldShell extends StatelessWidget {
       height: height,
       padding: padding,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: background,
         borderRadius: BorderRadius.circular(AppRadii.field),
         border: Border.all(
-          color: focused
-              ? AppColors.borderFocused
-              : filled
-                  ? Colors.transparent
-                  : AppColors.borderDefault,
+          color: borderColor ??
+              (focused
+                  ? AppColors.borderFocused
+                  : filled
+                      ? Colors.transparent
+                      : AppColors.borderDefault),
         ),
-        boxShadow: focused
-            ? AppShadows.fieldFocused
-            : filled
-                ? AppShadows.field
-                : null,
+        boxShadow: shadow ??
+            (focused
+                ? AppShadows.fieldFocused
+                : filled
+                    ? AppShadows.field
+                    : null),
       ),
       child: child,
     );
@@ -84,9 +98,11 @@ class AppFieldShell extends StatelessWidget {
                 ),
                 child: Text(
                   label,
-                  style: AppTypography.labelSmall.copyWith(
-                    color: focused ? AppColors.olive600 : AppColors.textMuted,
-                  ),
+                  style: labelStyle ??
+                      AppTypography.labelSmall.copyWith(
+                        color:
+                            focused ? AppColors.olive600 : AppColors.textMuted,
+                      ),
                 ),
               ),
             ),

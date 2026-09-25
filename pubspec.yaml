@@ -179,6 +179,10 @@ flutter:
     - assets/icons/
     - assets/images/
     - assets/images/home/
+    - assets/images/leaderboard/
+    - assets/images/submit_lawn/
+    - assets/images/profile/
+    - assets/images/badges/
     - assets/videos/
     - assets/audios/
     - assets/rive_animations/

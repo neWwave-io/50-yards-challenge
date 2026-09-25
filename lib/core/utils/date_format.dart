@@ -26,5 +26,10 @@ String dayAndMonth(DateTime date) =>
 String dayOverMonth(DateTime date) =>
     '${ordinalDay(date.day)}/${_monthAbbreviations[date.month - 1]}';
 
+/// "12th/ Aug/ 2026", the form's date field.
+String dayMonthYear(DateTime date) =>
+    '${ordinalDay(date.day)}/ ${_monthAbbreviations[date.month - 1]}/ '
+    '${date.year}';
+
 /// "Monday".
 String weekdayName(DateTime date) => _weekdayNames[date.weekday - 1];

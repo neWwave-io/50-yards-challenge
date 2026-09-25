@@ -5,24 +5,53 @@ import '../../../core/utils/date_format.dart';
 import '../data/home_data.dart';
 import 'availability_badge.dart';
 
-/// The dark green banner at the top of the home page.
+/// The dark green banner at the top of the home and profile pages.
 ///
 /// It runs behind the challenge card, which overlaps its lower edge, so the
 /// banner is drawn taller than its content and the page stacks the card on
 /// top of it.
+///
+/// Home shows the availability badge on the right; the profile passes its own
+/// [trailing] control instead.
 class HomeHeader extends StatelessWidget {
   const HomeHeader({
     super.key,
     required this.profile,
     required this.availability,
-    required this.onGoAway,
-    required this.onComeBack,
+    this.onGoAway,
+    this.onComeBack,
+    this.trailing,
+    this.avatarSize = contentHeight,
+    this.topGap = 4,
+    this.gradient = homeWash,
   });
 
   final HomeProfile profile;
   final Availability availability;
-  final Future<void> Function({DateTime? returnsOn}) onGoAway;
-  final Future<void> Function() onComeBack;
+
+  /// Needed for the availability badge, which is shown when there is no
+  /// [trailing] control.
+  final Future<void> Function({DateTime? returnsOn})? onGoAway;
+  final Future<void> Function()? onComeBack;
+
+  /// Replaces the availability badge.
+  final Widget? trailing;
+
+  /// The avatar is also the row's height.
+  final double avatarSize;
+
+  /// Space between the status bar and the avatar row.
+  final double topGap;
+
+  final Gradient gradient;
+
+  /// The home page's radial wash, anchored off the top-left corner.
+  static const homeWash = RadialGradient(
+    center: Alignment(-1.2, -1.4),
+    radius: 1.9,
+    colors: AppColors.headerWash,
+    stops: [0, 0.56, 0.78, 1],
+  );
 
   /// The line under the greeting says where the family stands right now.
   String? get statusLine {
@@ -47,21 +76,25 @@ class HomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = statusLine;
+    final goAway = onGoAway;
+    final comeBack = onComeBack;
+    final end = trailing ??
+        (goAway == null || comeBack == null
+            ? null
+            : AvailabilityBadge(
+                availability: availability,
+                onGoAway: goAway,
+                onComeBack: comeBack,
+              ));
 
     return Container(
       height: height,
       width: double.infinity,
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.vertical(
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.vertical(
           bottom: Radius.circular(AppRadii.dialog),
         ),
-        gradient: RadialGradient(
-          // Anchored off the top-left corner, as in the design.
-          center: Alignment(-1.2, -1.4),
-          radius: 1.9,
-          colors: AppColors.headerWash,
-          stops: [0, 0.56, 0.78, 1],
-        ),
+        gradient: gradient,
       ),
       padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
       child: SafeArea(
@@ -72,12 +105,12 @@ class HomeHeader extends StatelessWidget {
         child: Align(
           alignment: Alignment.topCenter,
           child: Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: EdgeInsets.only(top: topGap),
             child: SizedBox(
-              height: contentHeight,
+              height: avatarSize,
               child: Row(
                 children: [
-                  _Avatar(photoUrl: profile.photoUrl),
+                  _Avatar(photoUrl: profile.photoUrl, size: avatarSize),
                   const SizedBox(width: AppSpacing.lg),
                   Expanded(
                     child: Column(
@@ -101,12 +134,10 @@ class HomeHeader extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  AvailabilityBadge(
-                    availability: availability,
-                    onGoAway: onGoAway,
-                    onComeBack: onComeBack,
-                  ),
+                  if (end != null) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    end,
+                  ],
                 ],
               ),
             ),
@@ -155,19 +186,18 @@ class _TeamLine extends StatelessWidget {
 }
 
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.photoUrl});
+  const _Avatar({required this.photoUrl, required this.size});
 
   final String? photoUrl;
-
-  static const _size = 82.0;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     final url = photoUrl;
 
     return Container(
-      width: _size,
-      height: _size,
+      width: size,
+      height: size,
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
         gradient: AppColors.avatarDisc,

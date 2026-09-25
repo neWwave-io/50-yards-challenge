@@ -29,6 +29,21 @@ class FakeHomeRepository implements HomeRepository {
 
   @override
   Future<void> setAvailable() async => availableCalls++;
+
+  // The reads the profile page borrows.
+  @override
+  Future<HomeProfile> readProfile(String profileId) async => data.profile;
+
+  @override
+  Future<DayStreak> readStreak(String profileId) async => data.streak;
+
+  @override
+  Future<Availability> readAvailability(String profileId) async =>
+      data.availability;
+
+  @override
+  Future<List<CategoryTally>> readCategories(String profileId) async =>
+      data.categories;
 }
 
 HomeData buildData({

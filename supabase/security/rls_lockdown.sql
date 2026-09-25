@@ -54,6 +54,9 @@ alter table public.app_settings           enable row level security;
 alter table public.us_states              enable row level security;
 alter table public.mowed_categories       enable row level security;
 alter table public.find_lawn_tips         enable row level security;
+alter table public.admin_messages         enable row level security;
+alter table public.badges                 enable row level security;
+alter table public.badge_claims           enable row level security;
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- profiles
@@ -125,8 +128,10 @@ create policy user_roles_select on public.user_roles
 -- review happens through admin_review_lawn().
 -- ─────────────────────────────────────────────────────────────────────────
 grant select on public.lawns to authenticated;
-grant insert (profile_id, who_for, hours_taken, notes) on public.lawns to authenticated;
-grant update (who_for, hours_taken, notes)             on public.lawns to authenticated;
+grant insert (profile_id, who_for, hours_taken, notes,
+              service, mowed_on, wore_safety_gear) on public.lawns to authenticated;
+grant update (who_for, hours_taken, notes,
+              service, mowed_on, wore_safety_gear) on public.lawns to authenticated;
 
 create policy lawns_select_own_or_admin on public.lawns
   for select to authenticated
@@ -236,6 +241,75 @@ create policy find_lawn_tips_read   on public.find_lawn_tips   for select to ano
 create policy app_settings_read     on public.app_settings     for select to authenticated     using (true);
 
 -- ─────────────────────────────────────────────────────────────────────────
+-- badges — everyone reads the active ones; only admins set them up (name,
+-- picture, target, who for) or see retired ones. Progress is not stored; it
+-- comes from profile_badges(), which reads only the caller's own lawns.
+-- ─────────────────────────────────────────────────────────────────────────
+grant select on public.badges to anon, authenticated;
+grant insert, update, delete on public.badges to authenticated;
+
+create policy badges_read on public.badges
+  for select to anon, authenticated
+  using (is_active or public.is_admin());
+
+create policy badges_admin_insert on public.badges
+  for insert to authenticated
+  with check (public.is_admin());
+
+create policy badges_admin_update on public.badges
+  for update to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+create policy badges_admin_delete on public.badges
+  for delete to authenticated
+  using (public.is_admin());
+
+-- badge_claims — a family sends a claim and reads back its own; only admins
+-- review. The family can never mark its own claim approved.
+grant select on public.badge_claims to authenticated;
+grant insert (profile_id, badge_id, explanation, photo_path)
+  on public.badge_claims to authenticated;
+grant update (status, reviewed_by, reviewed_at)
+  on public.badge_claims to authenticated;
+
+create policy badge_claims_select_own_or_admin on public.badge_claims
+  for select to authenticated
+  using (profile_id = auth.uid() or public.is_admin());
+
+create policy badge_claims_insert_own on public.badge_claims
+  for insert to authenticated
+  with check (profile_id = auth.uid() and status = 'pending');
+
+create policy badge_claims_update_admin on public.badge_claims
+  for update to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- admin_messages — a family writes to the admin team and reads back what it
+-- sent. It can never edit or remove a message. Admins read everything and may
+-- only mark a message viewed or deleted; the body is never rewritten.
+-- ─────────────────────────────────────────────────────────────────────────
+grant select on public.admin_messages to authenticated;
+grant insert (profile_id, body) on public.admin_messages to authenticated;
+grant update (viewed_at, viewed_by, deleted_at, deleted_by)
+  on public.admin_messages to authenticated;
+
+create policy admin_messages_select_own_or_admin on public.admin_messages
+  for select to authenticated
+  using (profile_id = auth.uid() or public.is_admin());
+
+create policy admin_messages_insert_own on public.admin_messages
+  for insert to authenticated
+  with check (profile_id = auth.uid());
+
+create policy admin_messages_update_admin on public.admin_messages
+  for update to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+-- ─────────────────────────────────────────────────────────────────────────
 -- notifications — a member reads their own and may only flip is_read.
 -- Creation is server-side (admin RPC / Edge Function).
 -- ─────────────────────────────────────────────────────────────────────────
@@ -272,3 +346,59 @@ create policy device_tokens_all_own on public.device_tokens
 grant select on public.leaderboard         to anon, authenticated;
 grant select on public.hall_of_fame        to anon, authenticated;
 grant select on public.my_mowed_categories to authenticated;
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- Storage — lawn-photos holds pictures of children
+-- The dev policies from 0006_storage.sql let anyone, signed in or not, read,
+-- write, overwrite and delete every object. Replace them for lawn-photos:
+-- objects live at <profile_id>/<lawn_id>/<kind>.jpg, so ownership is the
+-- first folder. Admins read everything to review lawns.
+--
+-- ⚠️  The app stores public URLs (getPublicUrl) in lawn_photos.url. Making
+-- the bucket private breaks those links: switch the app to signed URLs
+-- (createSignedUrl) before, or together with, flipping `public` below.
+-- ─────────────────────────────────────────────────────────────────────────
+drop policy if exists storage_dev_read   on storage.objects;
+drop policy if exists storage_dev_insert on storage.objects;
+drop policy if exists storage_dev_update on storage.objects;
+drop policy if exists storage_dev_delete on storage.objects;
+
+-- avatars and announcements stay publicly readable; only their owners and
+-- admins write.
+create policy storage_public_read on storage.objects
+  for select to anon, authenticated
+  using (bucket_id in ('avatars', 'announcements'));
+
+-- Sign-up writes children's photos to children/<profile_id>/<n>.jpg.
+create policy storage_avatars_write_own on storage.objects
+  for all to authenticated
+  using (bucket_id = 'avatars'
+         and (storage.foldername(name))[1] = 'children'
+         and (storage.foldername(name))[2] = auth.uid()::text)
+  with check (bucket_id = 'avatars'
+              and (storage.foldername(name))[1] = 'children'
+              and (storage.foldername(name))[2] = auth.uid()::text);
+
+create policy storage_announcements_admin on storage.objects
+  for all to authenticated
+  using (bucket_id = 'announcements' and public.is_admin())
+  with check (bucket_id = 'announcements' and public.is_admin());
+
+create policy lawn_photos_read_own_or_admin on storage.objects
+  for select to authenticated
+  using (bucket_id = 'lawn-photos'
+         and ((storage.foldername(name))[1] = auth.uid()::text
+              or public.is_admin()));
+
+create policy lawn_photos_insert_own on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'lawn-photos'
+              and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Needed by the submit flow's clean-up when a later photo fails.
+create policy lawn_photos_delete_own on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'lawn-photos'
+         and (storage.foldername(name))[1] = auth.uid()::text);
+
+update storage.buckets set public = false where id = 'lawn-photos';

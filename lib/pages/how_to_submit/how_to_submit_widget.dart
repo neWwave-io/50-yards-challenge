@@ -342,7 +342,7 @@ class _HowToSubmitWidgetState extends State<HowToSubmitWidget>
                                             ),
                                             action: () async {
                                               context.pushNamed(
-                                                  SubmitLawnWidget.routeName);
+                                                  SubmitLawnScreen.routeName);
                                             },
                                           ),
                                         ),

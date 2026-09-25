@@ -69,11 +69,8 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     _appStateNotifier = AppStateNotifier.instance;
-    // Seed the notifier immediately. `AppStateNotifier.loading` is
-    // `user == null || showSplashImage`, so if the auth stream is slow or
-    // never emits, the splash image would stay up forever and no UI would
-    // ever render. Publishing the current session (possibly signed out)
-    // right away guarantees the app gets past the splash.
+    // Seed the notifier with the current session (possibly signed out) so
+    // the router has a user to route on before the auth stream emits.
     _appStateNotifier.update(SupabaseAuthUser(supabase.auth.currentUser));
     _router = createRouter(_appStateNotifier);
     userStream = the50YardChallengeFirebaseUserStream()
@@ -81,12 +78,6 @@ class _MyAppState extends State<MyApp> {
         _appStateNotifier.update(user);
       });
     jwtTokenStream.listen((_) {});
-    // Guaranteed splash dismissal. Scheduled before any other async work so a
-    // failure elsewhere in start-up cannot leave the user staring at the logo.
-    Future.delayed(
-      const Duration(milliseconds: 600),
-      () => _appStateNotifier.stopShowingSplashImage(),
-    );
   }
 
   @override

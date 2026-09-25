@@ -10,7 +10,7 @@ import '/backend/schema/enums/enums.dart';
 
 import '/auth/base_auth_user_provider.dart';
 import '/auth/firebase_auth/auth_util.dart';
-import '/component/nav/nav_widget.dart';
+import '/core/widgets/app_tab_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '/backend/push_notifications/push_notifications_handler.dart'
@@ -42,7 +42,6 @@ class AppStateNotifier extends ChangeNotifier {
 
   BaseAuthUser? initialUser;
   BaseAuthUser? user;
-  bool showSplashImage = true;
   String? _redirectLocation;
 
   /// Determines whether the app will refresh and build again when a sign
@@ -52,11 +51,6 @@ class AppStateNotifier extends ChangeNotifier {
   /// Otherwise, this will trigger a refresh and interrupt the action(s).
   bool notifyOnAuthChange = true;
 
-  // `user == null` simply means "signed out", which is a renderable state —
-  // it must not gate the UI. Treating it as "loading" meant that if the auth
-  // stream was slow, errored, or never emitted, the splash image stayed up
-  // forever and the app never rendered anything.
-  bool get loading => showSplashImage;
   bool get loggedIn => user?.loggedIn ?? false;
   bool get initiallyLoggedIn => initialUser?.loggedIn ?? false;
   bool get shouldRedirect => loggedIn && _redirectLocation != null;
@@ -84,12 +78,37 @@ class AppStateNotifier extends ChangeNotifier {
     // (in order to catch sign in / out events).
     updateNotifyOnAuthChange(true);
   }
-
-  void stopShowingSplashImage() {
-    showSplashImage = false;
-    notifyListeners();
-  }
 }
+
+/// The tab bar for a screen that is [current] tab.
+///
+/// Home, Board, Badges and Me replace the screen rather than stacking it, so
+/// Back never walks through every tab ever visited. Log is an action — it
+/// opens the submit form on top, and Back returns to where the child was.
+Widget appTabBar(BuildContext context, AppTab? current) => AppTabBar(
+      current: current,
+      onSelect: (tab) {
+        if (tab == current) return;
+        const fade = <String, dynamic>{
+          kTransitionInfoKey: TransitionInfo(
+            hasTransition: true,
+            transitionType: PageTransitionType.fade,
+          ),
+        };
+        switch (tab) {
+          case AppTab.home:
+            context.goNamed(HomeScreen.routeName, extra: fade);
+          case AppTab.board:
+            context.goNamed(LeaderboardScreen.routeName, extra: fade);
+          case AppTab.log:
+            context.pushNamed(SubmitLawnScreen.routeName);
+          case AppTab.badges:
+            context.goNamed(AchievementScreen.routeName, extra: fade);
+          case AppTab.me:
+            context.goNamed(ProfileScreen.routeName, extra: fade);
+        }
+      },
+    );
 
 /// The v2 sign-up, wired to the app's router. Step 2 is pushed by step 1 once
 /// it has the account details, so it has no route of its own.
@@ -134,14 +153,14 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           path: HomeScreen.routePath,
           builder: (context, params) => HomeScreen(
             onStartMowing: () =>
-                context.pushNamed(SubmitLawnWidget.routeName),
+                context.pushNamed(SubmitLawnScreen.routeName),
             onSeeAnnouncements: () =>
                 context.pushNamed(AnnouncementWidget.routeName),
             onOpenAnnouncement: (_) =>
                 context.pushNamed(AnnouncementWidget.routeName),
-            onOpenBadges: () => context.pushNamed(AchivementWidget.routeName),
+            onOpenBadges: () => context.pushNamed(AchievementScreen.routeName),
             onWatchTraining: (video) => _openLink(context, video.videoUrl),
-            bottomBar: NavWidget(pageIndex: 0),
+            bottomBar: appTabBar(context, AppTab.home),
           ),
         ),
         FFRoute(
@@ -173,9 +192,11 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => _signUpScreen(context),
         ),
         FFRoute(
-          name: LeaderBoardWidget.routeName,
-          path: LeaderBoardWidget.routePath,
-          builder: (context, params) => LeaderBoardWidget(),
+          name: LeaderboardScreen.routeName,
+          path: LeaderboardScreen.routePath,
+          builder: (context, params) => LeaderboardScreen(
+            bottomBar: appTabBar(context, AppTab.board),
+          ),
         ),
         FFRoute(
           name: HowToSumitOldWidget.routeName,
@@ -183,14 +204,35 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => HowToSumitOldWidget(),
         ),
         FFRoute(
+          name: AchievementScreen.routeName,
+          path: AchievementScreen.routePath,
+          builder: (context, params) => AchievementScreen(
+            onEarnBadge: () => context.pushNamed(BadgesScreen.routeName),
+            onSubmitLawn: () =>
+                context.pushNamed(SubmitLawnScreen.routeName),
+            bottomBar: appTabBar(context, AppTab.badges),
+          ),
+        ),
+        FFRoute(
+          name: BadgesScreen.routeName,
+          path: BadgesScreen.routePath,
+          builder: (context, params) => BadgesScreen(
+            onBack: () => context.safePop(),
+          ),
+        ),
+        // v1's /achivement, kept reachable while the pages that still link to
+        // it by name are ported.
+        FFRoute(
           name: AchivementWidget.routeName,
           path: AchivementWidget.routePath,
           builder: (context, params) => AchivementWidget(),
         ),
         FFRoute(
-          name: SubmitLawnWidget.routeName,
-          path: SubmitLawnWidget.routePath,
-          builder: (context, params) => SubmitLawnWidget(),
+          name: SubmitLawnScreen.routeName,
+          path: SubmitLawnScreen.routePath,
+          builder: (context, params) => SubmitLawnScreen(
+            onClose: () => context.safePop(),
+          ),
         ),
         FFRoute(
           name: ShirtSystemWidget.routeName,
@@ -213,13 +255,24 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => HallOfFameWidget(),
         ),
         FFRoute(
-          name: ProfilePageWidget.routeName,
-          path: ProfilePageWidget.routePath,
-          builder: (context, params) => ProfilePageWidget(
-            isShirt: params.getParam(
-              'isShirt',
-              ParamType.bool,
-            ),
+          name: ProfileScreen.routeName,
+          path: ProfileScreen.routePath,
+          builder: (context, params) => ProfileScreen(
+            onOpenSettings: () =>
+                context.pushNamed(ProfileEditWidget.routeName),
+            onOpenBadges: () => context.pushNamed(AchievementScreen.routeName),
+            onOpenLeaderboard: () =>
+                context.goNamed(LeaderboardScreen.routeName),
+            onContactAdmin: () =>
+                context.pushNamed(ContactAdminScreen.routeName),
+            bottomBar: appTabBar(context, AppTab.me),
+          ),
+        ),
+        FFRoute(
+          name: ContactAdminScreen.routeName,
+          path: ContactAdminScreen.routePath,
+          builder: (context, params) => ContactAdminScreen(
+            onClose: () => context.safePop(),
           ),
         ),
         FFRoute(
@@ -464,15 +517,9 @@ class FFRoute {
                   builder: (context, _) => builder(context, ffParams),
                 )
               : builder(context, ffParams);
-          final child = appStateNotifier.loading
-              ? Container(
-                  color: Colors.transparent,
-                  child: Image.asset(
-                    'assets/images/50yardChallange.jpg',
-                    fit: BoxFit.contain,
-                  ),
-                )
-              : PushNotificationsHandler(child: page);
+          // No in-app splash: the old 50 Yard logo was cropped on most
+          // screens, and the first page renders straight away.
+          final child = PushNotificationsHandler(child: page);
 
           final transitionInfo = state.transitionInfo;
           return transitionInfo.hasTransition

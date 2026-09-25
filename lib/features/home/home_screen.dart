@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_tab_bar.dart';
 import 'data/home_data.dart';
 import 'data/home_repository.dart';
 import 'home_controller.dart';
@@ -67,8 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.olive50,
-      // The Scaffold lays the body out above the bar, so the last card can
-      // never end up underneath it.
+      // The bar floats over the page rather than standing on a strip of
+      // its own, so the body runs the full height and the content
+      // scrolls behind it. Each page pads its own foot by
+      // AppTabBar.clearance so nothing comes to rest underneath.
+      extendBody: true,
       bottomNavigationBar: widget.bottomBar,
       body: ListenableBuilder(
         listenable: _controller,
@@ -225,7 +229,7 @@ class _Content extends StatelessWidget {
                           onWatch: screen.onWatchTraining,
                         ),
                 ),
-                const SizedBox(height: AppSpacing.huge),
+                SizedBox(height: AppTabBar.clearance(context)),
               ],
             ),
           ),

@@ -64,6 +64,20 @@ class HomeRepository {
     );
   }
 
+  // --- shared with the profile page ------------------------------------------
+
+  /// The header and challenge card's data.
+  Future<HomeProfile> readProfile(String profileId) => _profile(profileId);
+
+  Future<DayStreak> readStreak(String profileId) => _streak(profileId);
+
+  Future<Availability> readAvailability(String profileId) =>
+      _availability(profileId);
+
+  /// Lawns per kind of neighbour, one entry per [kMowedCategories].
+  Future<List<CategoryTally>> readCategories(String profileId) async =>
+      _tally(await _lawns(profileId));
+
   /// Runs [read], falling back to [fallback] if it fails.
   static Future<T> _optional<T>(
     String what,
@@ -173,7 +187,7 @@ class HomeRepository {
         .from('training_videos')
         .select('id, title, description, video_url, thumbnail_url')
         .eq('is_published', true)
-        .order('sort_order')
+        .order('sort_order', ascending: true)
         .limit(10);
 
     return [

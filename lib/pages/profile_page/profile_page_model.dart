@@ -4,7 +4,6 @@ import '/backend/push_notifications/push_notifications_util.dart';
 import '/backend/schema/enums/enums.dart';
 import '/backend/schema/structs/index.dart';
 import '/component/congrats_got_shirt/congrats_got_shirt_widget.dart';
-import '/component/nav/nav_widget.dart';
 import '/component/setting_pop_up/setting_pop_up_widget.dart';
 import '/component/spin_shirt/spin_shirt_widget.dart';
 import '/components/shirt_level_widget.dart';
@@ -62,19 +61,16 @@ class ProfilePageModel extends FlutterFlowModel<ProfilePageWidget> {
   // Stores action output result for [Backend Call - Create Document] action in Button widget.
   ShirtRequestsRecord? shirt;
   // Model for Nav component.
-  late NavModel navModel;
 
   @override
   void initState(BuildContext context) {
     bigColumnScrollController = ScrollController();
     shirtLevelModel = createModel(context, () => ShirtLevelModel());
-    navModel = createModel(context, () => NavModel());
   }
 
   @override
   void dispose() {
     bigColumnScrollController?.dispose();
     shirtLevelModel.dispose();
-    navModel.dispose();
   }
 }
